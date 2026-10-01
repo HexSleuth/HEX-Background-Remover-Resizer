@@ -1,0 +1,1950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05050a">
+<title>HEX — Cosmic Background Remover & Resizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+/* ============================================================
+   BASE
+   ============================================================ */
+:root{
+  --gold:#d4943a;--gold-l:#f0b960;--bg:#05050a;
+  --card:rgba(17,17,24,.65);--border:#23232e;--border-2:#2f2f3d;
+  --text:#e8e6e3;--muted:#8a8696;--danger:#ff5a5a;--ok:#43d17c;
+  --radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;position:relative;
+}
+.mono{font-family:'JetBrains Mono',monospace}
+::selection{background:rgba(212,148,58,.35)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#0a0a11}
+::-webkit-scrollbar-thumb{background:#26262f;border-radius:8px;border:2px solid #0a0a11}
+::-webkit-scrollbar-thumb:hover{background:#3a3a48}
+
+/* ============================================================
+   GALAXY BACKGROUND
+   ============================================================ */
+#galaxyCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.nebula{
+  position:fixed;border-radius:50%;filter:blur(80px);opacity:.45;
+  pointer-events:none;z-index:0;animation:drift 30s ease-in-out infinite alternate;
+}
+.nebula-1{width:520px;height:520px;top:-120px;left:-100px;
+  background:radial-gradient(circle,rgba(212,148,58,.55),transparent 65%)}
+.nebula-2{width:600px;height:600px;bottom:-180px;right:-120px;
+  background:radial-gradient(circle,rgba(120,80,200,.45),transparent 65%);
+  animation-delay:-10s}
+.nebula-3{width:440px;height:440px;top:40%;left:55%;
+  background:radial-gradient(circle,rgba(60,130,220,.35),transparent 65%);
+  animation-delay:-18s}
+@keyframes drift{
+  0%{transform:translate(0,0) scale(1)}
+  100%{transform:translate(40px,-30px) scale(1.1)}
+}
+
+.layer{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+
+/* ============================================================
+   TOPBAR / HEADER
+   ============================================================ */
+.topbar{
+  position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:12px;
+  padding:10px 16px;background:rgba(8,8,14,.72);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.brand-logo{
+  width:38px;height:38px;border-radius:10px;flex:none;
+  background:linear-gradient(135deg,var(--gold-l),var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  color:#0a0a0f;font-size:16px;box-shadow:0 0 18px rgba(212,148,58,.35);
+}
+.brand-txt h1{margin:0;font-size:15px;font-weight:900;letter-spacing:.14em;line-height:1}
+.brand-txt p{margin:2px 0 0;font-size:10px;color:var(--muted);letter-spacing:.04em}
+.topbar-spacer{flex:1}
+
+/* ============================================================
+   CONTAINER
+   ============================================================ */
+.container{width:100%;max-width:1240px;margin:0 auto;padding:18px 14px 60px;flex:1}
+.hero{text-align:center;margin:14px 0 20px}
+.hero h2{margin:0 0 8px;font-size:clamp(24px,5.5vw,38px);font-weight:900;
+  letter-spacing:-.02em;line-height:1.1}
+.hero p{margin:0;color:var(--muted);font-size:13.5px;max-width:640px;
+  margin-inline:auto;line-height:1.6}
+.glow-text{color:var(--gold);text-shadow:0 0 28px rgba(212,148,58,.5)}
+
+/* ============================================================
+   CARDS + FX
+   ============================================================ */
+.resize-card{
+  background:var(--card);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;position:relative;overflow:hidden;
+  transition:border-color .3s,transform .3s,box-shadow .3s,opacity .3s;
+}
+.resize-card:hover{
+  border-color:rgba(212,148,58,.4);transform:translateY(-2px);
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.resize-card + .resize-card{margin-top:12px}
+
+.card-title{
+  font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:7px;
+  position:relative;z-index:3;
+}
+.card-title i{color:var(--gold)}
+
+/* Remove Button */
+.remove-btn{
+  position:absolute;top:12px;right:12px;width:28px;height:28px;
+  border-radius:6px;background:rgba(255,255,255,.05);
+  border:1px solid #2a2a38;color:#8a8696;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:.2s;z-index:30;
+}
+.remove-btn:hover{
+  background:rgba(220,50,50,.15);border-color:rgba(220,50,50,.5);color:#ff8a8a;
+}
+
+/* Shooting star */
+.shoot-h{
+  position:absolute;left:-60%;top:0;width:60%;height:200%;
+  transform:skewX(-20deg);z-index:20;pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(240,185,96,0) 20%,
+    rgba(255,230,180,.95) 60%,
+    #ffffff 80%,
+    rgba(255,255,255,0) 100%);
+  box-shadow:0 0 15px rgba(240,185,96,.9),0 0 30px rgba(240,185,96,.5);
+  filter:blur(1px);
+}
+.resize-card.entering .shoot-h{
+  animation:shootAcrossCard 1.4s cubic-bezier(.25,.1,.25,1) forwards;
+  animation-delay:.3s;
+}
+@keyframes shootAcrossCard{
+  0%{left:-60%;opacity:0}
+  15%{opacity:1}
+  100%{left:120%;opacity:0}
+}
+
+/* Flash */
+.card-flash{
+  position:absolute;inset:0;z-index:15;pointer-events:none;opacity:0;
+  background:radial-gradient(circle at center,rgba(255,255,255,.8),rgba(240,185,96,.4) 40%,transparent 70%);
+  mix-blend-mode:screen;
+}
+.resize-card.entering .card-flash{animation:cardFlash .8s ease-out forwards}
+@keyframes cardFlash{
+  0%{opacity:0;transform:scale(.5)}
+  30%{opacity:1;transform:scale(1)}
+  100%{opacity:0;transform:scale(1.5)}
+}
+
+/* Ring */
+.card-ring{
+  position:absolute;inset:0;border-radius:var(--radius);
+  border:2px solid rgba(240,185,96,.8);
+  z-index:10;pointer-events:none;opacity:0;
+}
+.resize-card.entering .card-ring{animation:ringExpand 1.2s ease-out forwards}
+@keyframes ringExpand{
+  0%{opacity:1;transform:scale(.9)}
+  100%{opacity:0;transform:scale(1.1)}
+}
+
+/* Burst */
+.burst{position:absolute;left:50%;top:50%;width:0;height:0;z-index:25;pointer-events:none}
+.burst span{
+  position:absolute;left:0;top:0;width:5px;height:5px;border-radius:50%;
+  background:#f0b960;
+  box-shadow:0 0 8px #f0b960,0 0 16px rgba(240,185,96,.6);
+  opacity:0;
+}
+.resize-card.entering .burst span{
+  animation:spark var(--dur,1s) cubic-bezier(.2,.6,.3,1) forwards;
+  animation-delay:var(--delay,0s);
+}
+@keyframes spark{
+  0%{transform:translate(-50%,-50%) translate(0,0) scale(0);opacity:0}
+  20%{opacity:1;transform:translate(-50%,-50%) translate(0,0) scale(1.4)}
+  100%{transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(0);opacity:0}
+}
+
+/* Card entrance */
+@keyframes cardEnter{
+  0%{opacity:0;transform:translateY(20px) scale(.92);filter:brightness(1.8)}
+  60%{opacity:1;transform:translateY(0) scale(1.02);filter:brightness(1.3)}
+  100%{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}
+}
+.resize-card.entering{animation:cardEnter .6s ease both}
+.fx-content{position:relative;z-index:3}
+
+/* ============================================================
+   DROPZONE
+   ============================================================ */
+.drop-zone{
+  border:2px dashed var(--border-2);border-radius:16px;transition:all .3s;
+  cursor:pointer;background:rgba(17,17,24,.55);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  padding:46px 20px;text-align:center;outline:none;
+}
+.drop-zone:hover,.drop-zone:focus-visible{
+  border-color:var(--gold);background:rgba(212,148,58,.045);
+  box-shadow:0 0 46px rgba(212,148,58,.1);
+}
+.drop-zone.dragging{
+  border-color:var(--gold-l);background:rgba(212,148,58,.09);transform:scale(1.008);
+}
+.dz-icon{
+  width:56px;height:56px;margin:0 auto 14px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(240,185,96,.18),rgba(212,148,58,.08));
+  border:1px solid rgba(212,148,58,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;color:var(--gold-l);
+  animation:pulseGlow 3s ease-in-out infinite;
+}
+@keyframes pulseGlow{
+  0%,100%{box-shadow:0 0 0 0 rgba(212,148,58,.4)}
+  50%{box-shadow:0 0 0 14px rgba(212,148,58,0)}
+}
+.drop-zone h3{margin:0 0 6px;font-size:17px;font-weight:800}
+.drop-zone p{margin:0;font-size:12.5px;color:var(--muted)}
+.dz-badge{
+  display:inline-flex;align-items:center;gap:7px;margin-top:16px;
+  padding:6px 12px;border-radius:8px;font-size:10.5px;font-weight:700;
+  letter-spacing:.08em;background:rgba(212,148,58,.08);
+  border:1px solid rgba(212,148,58,.22);color:var(--gold-l);
+}
+
+/* ============================================================
+   BUTTONS / INPUTS
+   ============================================================ */
+.btn-primary{
+  background:linear-gradient(135deg,var(--gold-l),var(--gold));
+  color:#0a0a0f;font-weight:700;border:none;border-radius:8px;
+  padding:11px;cursor:pointer;transition:.3s;width:100%;font-size:13.5px;
+  position:relative;z-index:2;font-family:inherit;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-primary:disabled{opacity:.42;cursor:not-allowed}
+.btn-primary:not(:disabled):hover{
+  box-shadow:0 6px 24px rgba(212,148,58,.35);transform:translateY(-1px);
+}
+.btn-primary:active{transform:translateY(0)}
+
+.btn-secondary{
+  background:rgba(17,17,24,.6);backdrop-filter:blur(8px);
+  color:var(--text);border:1px solid var(--border-2);border-radius:8px;
+  padding:8px 14px;cursor:pointer;transition:.3s;font-size:12.5px;
+  font-family:inherit;display:inline-flex;align-items:center;
+  justify-content:center;gap:8px;
+}
+.btn-secondary:hover{border-color:var(--gold);color:var(--gold-l)}
+.btn-secondary:disabled{opacity:.42;cursor:not-allowed}
+
+.size-input,.select,.input{
+  background:#0e0e15;border:1px solid var(--border-2);border-radius:8px;
+  padding:9px 10px;color:var(--text);
+  font-family:'JetBrains Mono',monospace;font-size:13px;
+  width:100%;transition:.2s;position:relative;z-index:2;appearance:none;
+}
+.size-input{text-align:center;font-size:14px}
+.select{
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a8696'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 6px center;
+  background-size:20px;padding-right:28px;cursor:pointer;
+}
+.select option{background:#0e0e15;color:var(--text)}
+.size-input:focus,.select:focus,.input:focus{
+  outline:none;border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(212,148,58,.15);
+}
+input[type=color]{
+  width:100%;height:36px;padding:2px;background:#0e0e15;
+  border:1px solid var(--border-2);border-radius:9px;cursor:pointer;
+}
+input[type=color]::-webkit-color-swatch-wrapper{padding:2px}
+input[type=color]::-webkit-color-swatch{border:none;border-radius:6px}
+
+.field{margin-bottom:10px;min-width:0}
+.label{
+  display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:5px;
+  position:relative;z-index:2;
+}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.check{
+  display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text);
+  cursor:pointer;user-select:none;padding:5px 0;position:relative;z-index:2;
+}
+.check input{
+  appearance:none;width:17px;height:17px;flex:none;border-radius:5px;
+  border:1.5px solid var(--border-2);background:#0e0e15;
+  cursor:pointer;transition:.18s;position:relative;
+}
+.check input:checked{background:var(--gold);border-color:var(--gold)}
+.check input:checked::after{
+  content:'';position:absolute;left:5px;top:1.5px;width:4px;height:9px;
+  border:solid #0a0a0f;border-width:0 2px 2px 0;transform:rotate(45deg);
+}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.hint{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:8px;
+  position:relative;z-index:2}
+
+/* ============================================================
+   PROGRESS / SPINNERS
+   ============================================================ */
+.progress-wrap{margin-top:10px;position:relative;z-index:2}
+.progress{height:7px;border-radius:99px;background:#15151f;overflow:hidden;
+  border:1px solid var(--border)}
+.progress-bar{
+  height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-l));
+  transition:width .35s ease;box-shadow:0 0 12px rgba(212,148,58,.5);
+}
+.progress-bar.indet{width:40% !important;animation:indet 1.3s ease-in-out infinite}
+@keyframes indet{0%{margin-left:-40%}100%{margin-left:100%}}
+.progress-text{
+  font-size:11.5px;color:var(--muted);margin-top:6px;text-align:center;
+  font-family:'JetBrains Mono',monospace;
+}
+.spinner{
+  width:38px;height:38px;border-radius:50%;
+  border:3px solid rgba(212,148,58,.18);border-top-color:var(--gold-l);
+  animation:spin .8s linear infinite;
+}
+.mini-spinner{
+  width:13px;height:13px;border-radius:50%;
+  border:2px solid rgba(212,148,58,.25);border-top-color:var(--gold-l);
+  animation:spin .7s linear infinite;display:inline-block;flex:none;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============================================================
+   FILEBAR / PREVIEW
+   ============================================================ */
+.filebar{
+  display:flex;align-items:center;gap:11px;margin-bottom:12px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);
+  position:relative;z-index:3;
+}
+.filebar .thumb{
+  width:46px;height:46px;border-radius:9px;object-fit:cover;flex:none;
+  border:1px solid var(--border-2);background:#0e0e15;
+}
+.filebar .meta{flex:1;min-width:0}
+.filebar .meta .n{font-size:13px;font-weight:700;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.filebar .meta .d{font-size:11px;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;margin-top:2px}
+
+.img-loader{
+  position:relative;display:block;line-height:0;border-radius:12px;
+  overflow:hidden;border:1px solid var(--border-2);background:#0b0b12;
+  z-index:2;
+}
+.img-loader img{width:100%;display:block;opacity:.42;filter:saturate(.8)}
+.spinner-overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;gap:12px;
+  align-items:center;justify-content:center;
+  background:radial-gradient(circle at center,rgba(5,5,10,.4),rgba(5,5,10,.75));
+  pointer-events:none;
+}
+.spinner-overlay .label{
+  font-size:11.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+  letter-spacing:.06em;text-align:center;padding:0 12px;
+}
+
+/* Comparison slider */
+.cmp{
+  position:relative;width:100%;overflow:hidden;border-radius:12px;
+  border:1px solid var(--border-2);background:#0b0b12;line-height:0;
+  touch-action:none;user-select:none;-webkit-user-select:none;
+  cursor:ew-resize;z-index:2;
+}
+.cmp-img{width:100%;display:block;pointer-events:none;
+  -webkit-user-drag:none;user-select:none}
+.cmp-overlay{position:absolute;inset:0;width:100%;height:100%;
+  will-change:clip-path}
+.cmp-overlay .cmp-img{width:100%;height:100%;object-fit:fill}
+.cmp-handle{
+  position:absolute;top:0;bottom:0;width:2px;background:var(--gold-l);
+  transform:translateX(-1px);pointer-events:none;
+  box-shadow:0 0 14px rgba(240,185,96,.85);
+}
+.cmp-knob{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold-l),var(--gold));
+  color:#0a0a0f;display:flex;align-items:center;justify-content:center;
+  font-size:13px;
+  box-shadow:0 6px 20px rgba(0,0,0,.55),0 0 0 3px rgba(5,5,10,.6);
+}
+.checkerboard{
+  background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><rect x="0" y="0" width="10" height="10" fill="%23cccccc"/><rect x="10" y="10" width="10" height="10" fill="%23cccccc"/><rect x="10" y="0" width="10" height="10" fill="%23ffffff"/><rect x="0" y="10" width="10" height="10" fill="%23ffffff"/></svg>');
+  background-size:20px 20px;
+}
+
+video.preview{
+  width:100%;display:block;border-radius:12px;
+  border:1px solid var(--border-2);background:#000;z-index:2;
+  position:relative;
+}
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+.toast-wrap{
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+  z-index:200;display:flex;flex-direction:column;gap:8px;
+  width:min(460px,calc(100vw - 28px));pointer-events:none;
+}
+.toast{
+  display:flex;align-items:center;gap:10px;padding:11px 14px;
+  border-radius:11px;font-size:13px;font-weight:600;
+  background:#16161f;border:1px solid var(--border-2);color:var(--text);
+  box-shadow:0 14px 40px rgba(0,0,0,.6);
+  animation:toastIn .25s cubic-bezier(.2,.9,.3,1.2);
+}
+.toast.error{background:#2a1114;border-color:#5c1f24;color:#ffb4b4}
+.toast.error i{color:var(--danger)}
+.toast.success{background:#0f2318;border-color:#1e4a30;color:#a7f3c6}
+.toast.success i{color:var(--ok)}
+.toast.info{background:#101a26;border-color:#1e3a52;color:#a9d5f5}
+.toast.info i{color:#5aa9e6}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px) scale(.96)}
+  to{opacity:1;transform:none}}
+
+/* ============================================================
+   PILLS / BANNERS
+   ============================================================ */
+.pill{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 9px;
+  border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.06em;
+  background:rgba(212,148,58,.1);border:1px solid rgba(212,148,58,.25);
+  color:var(--gold-l);
+}
+.pill.ok{background:rgba(67,209,124,.1);border-color:rgba(67,209,124,.3);color:var(--ok)}
+.pill.err{background:rgba(255,90,90,.1);border-color:rgba(255,90,90,.3);color:#ffb4b4}
+.pill.info{background:rgba(90,169,230,.1);border-color:rgba(90,169,230,.28);color:#8ac6ff}
+
+.warn-banner{
+  display:flex;align-items:flex-start;gap:10px;padding:11px 13px;
+  border-radius:11px;margin-bottom:14px;font-size:12.5px;line-height:1.55;
+  background:rgba(212,148,58,.08);border:1px solid rgba(212,148,58,.3);
+  color:#f0d3a4;position:relative;z-index:3;
+}
+.warn-banner i{color:var(--gold-l);margin-top:2px}
+.warn-banner b{color:var(--gold-l)}
+.warn-banner.err{background:rgba(255,90,90,.08);border-color:rgba(255,90,90,.32);color:#ffc0c0}
+.warn-banner.err i{color:var(--danger)}
+.warn-banner.err b{color:#ff9090}
+
+.hero-pulse{animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(212,148,58,.5)}
+  50%{box-shadow:0 0 0 14px rgba(212,148,58,0)}
+}
+
+/* ============================================================
+   TOOLS / CODE
+   ============================================================ */
+.tool-list{display:flex;flex-direction:column;gap:6px;position:relative;z-index:3}
+.tool-item{
+  display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:9px;
+  background:rgba(10,10,16,.55);border:1px solid var(--border);transition:.18s;
+}
+.tool-item:hover{border-color:var(--gold);background:rgba(212,148,58,.06)}
+.tool-icon{
+  width:28px;height:28px;border-radius:7px;flex:none;
+  background:linear-gradient(135deg,rgba(240,185,96,.16),rgba(212,148,58,.06));
+  border:1px solid rgba(212,148,58,.28);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold-l);font-size:12px;
+}
+.tool-body{flex:1;min-width:0}
+.tool-name{font-size:12px;font-weight:700;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tool-desc{font-size:10.5px;color:var(--muted);margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tool-open{
+  flex:none;width:26px;height:26px;border-radius:7px;
+  background:rgba(212,148,58,.08);border:1px solid rgba(212,148,58,.25);
+  color:var(--gold-l);cursor:pointer;transition:.15s;
+  display:flex;align-items:center;justify-content:center;font-size:10px;
+}
+.tool-open:hover{background:var(--gold);color:#0a0a0f;border-color:var(--gold)}
+
+.code-block{
+  background:#08080e;border:1px solid var(--border-2);border-radius:10px;
+  padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;
+  line-height:1.65;color:#d8d4c8;overflow-x:auto;white-space:pre;
+  margin-top:8px;position:relative;
+}
+.code-block .copy-btn{
+  position:absolute;top:8px;right:8px;
+  background:rgba(212,148,58,.12);border:1px solid rgba(212,148,58,.3);
+  color:var(--gold-l);font-family:'DM Sans',sans-serif;font-size:10.5px;
+  font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;
+  letter-spacing:.04em;transition:.15s;
+}
+.code-block .copy-btn:hover{background:var(--gold);color:#0a0a0f;border-color:var(--gold)}
+
+.tag-pill{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 7px;
+  border-radius:99px;font-size:9.5px;font-weight:700;
+  letter-spacing:.05em;flex:none;
+}
+.tag-pill.server{
+  background:rgba(90,169,230,.12);color:#8ac6ff;
+  border:1px solid rgba(90,169,230,.32);
+}
+
+/* ============================================================
+   FOOTER / LAYOUT
+   ============================================================ */
+.footer{
+  text-align:center;padding:22px 14px 30px;color:#5e5b6b;font-size:11.5px;
+  position:relative;z-index:1;
+}
+.footer a{color:var(--gold);text-decoration:none}
+
+.center-wrap{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:0 16px 32px 16px;
+}
+
+/* Grid */
+.img-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:760px){.img-grid{grid-template-columns:1fr 1fr}}
+@media(min-width:1180px){.img-grid{grid-template-columns:1fr 1fr 1fr}}
+
+@media(max-width:600px){
+  .container{padding:12px 10px 46px}
+  .hero{margin:8px 0 14px}
+  .resize-card{padding:12px}
+  .topbar{padding:9px 12px}
+}
+</style>
+</head>
+<body>
+
+<!-- Galaxy background -->
+<canvas id="galaxyCanvas"></canvas>
+<div class="nebula nebula-1"></div>
+<div class="nebula nebula-2"></div>
+<div class="nebula nebula-3"></div>
+
+<div id="root"></div>
+
+<!-- Load ONNX Runtime Web -->
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+
+<!-- Load @imgly/background-removal for ISNet -->
+<script type="module">
+  (async () => {
+    try {
+      const mod = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm');
+      window.__imglyRemoveBackground = mod.removeBackground;
+      window.__imglyReady = true;
+      window.dispatchEvent(new Event('imgly-ready'));
+    } catch (err) {
+      console.error('imgly load failed', err);
+      window.__imglyError = err && err.message ? err.message : 'Failed to load @imgly';
+      window.dispatchEvent(new Event('imgly-error'));
+    }
+  })();
+</script>
+
+<!-- Vanilla galaxy canvas (stars + shooting stars) -->
+<script>
+(function() {
+  const canvas = document.getElementById('galaxyCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  let shootingStars = [];
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initStars();
+  }
+
+  function initStars() {
+    stars = [];
+    const count = Math.min(260, Math.floor((canvas.width * canvas.height) / 9000));
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.4 + 0.2,
+        tw: Math.random() * 0.02 + 0.005,
+        phase: Math.random() * Math.PI * 2,
+        hue: Math.random() > 0.86 ? 38 : (Math.random() > 0.5 ? 220 : 0),
+        sat: Math.random() > 0.72 ? 60 : 0
+      });
+    }
+  }
+
+  function spawnShootingStar() {
+    shootingStars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.5,
+      len: Math.random() * 120 + 80,
+      speed: Math.random() * 6 + 6,
+      angle: Math.PI / 4,
+      life: 1
+    });
+  }
+
+  function drawGalaxy() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const s of stars) {
+      s.phase += s.tw;
+      const alpha = 0.35 + Math.abs(Math.sin(s.phase)) * 0.6;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      if (s.sat > 0) {
+        ctx.fillStyle = `hsla(${s.hue}, ${s.sat}%, 75%, ${alpha})`;
+      } else {
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      }
+      ctx.fill();
+    }
+
+    for (let i = shootingStars.length - 1; i >= 0; i--) {
+      const sh = shootingStars[i];
+      sh.x += Math.cos(sh.angle) * sh.speed;
+      sh.y += Math.sin(sh.angle) * sh.speed;
+      sh.life -= 0.012;
+
+      const tailX = sh.x - Math.cos(sh.angle) * sh.len;
+      const tailY = sh.y - Math.sin(sh.angle) * sh.len;
+      const grad = ctx.createLinearGradient(sh.x, sh.y, tailX, tailY);
+      grad.addColorStop(0, `rgba(255,230,180,${Math.max(0, sh.life)})`);
+      grad.addColorStop(1, 'rgba(255,230,180,0)');
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sh.x, sh.y);
+      ctx.lineTo(tailX, tailY);
+      ctx.stroke();
+
+      if (sh.life <= 0 || sh.x > canvas.width + 100 || sh.y > canvas.height + 100) {
+        shootingStars.splice(i, 1);
+      }
+    }
+
+    if (Math.random() < 0.004) spawnShootingStar();
+    requestAnimationFrame(drawGalaxy);
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  drawGalaxy();
+})();
+</script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* ============================================================
+   MODEL REGISTRY
+   ============================================================ */
+const MODEL_REGISTRY = {
+  'isnet-fast': {
+    engine: 'imgly',
+    imglyModel: 'isnet_quint8',
+    displayName: 'ISNet · Fast',
+    tagline: 'ISNet int8 · smallest, quickest',
+    sizeLabel: '~11 MB',
+    tag: 'browser',
+  },
+  'isnet-balanced': {
+    engine: 'imgly',
+    imglyModel: 'isnet_fp16',
+    displayName: 'ISNet · Balanced',
+    tagline: 'ISNet fp16 · default',
+    sizeLabel: '~22 MB',
+    tag: 'browser',
+  },
+  'isnet-high': {
+    engine: 'imgly',
+    imglyModel: 'isnet',
+    displayName: 'ISNet · High',
+    tagline: 'ISNet fp32 · best edges',
+    sizeLabel: '~44 MB',
+    tag: 'browser',
+  },
+  'rmbg14-quant': {
+    engine: 'ort',
+    url: 'https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model_quantized.onnx',
+    displayName: 'RMBG-1.4 · Quantized',
+    tagline: 'Bria RMBG-1.4 int8 · small download',
+    sizeLabel: '~44 MB',
+    inputSize: 1024,
+    mean: [0.5, 0.5, 0.5],
+    std: [1.0, 1.0, 1.0],
+    applySigmoid: true,
+    tag: 'browser',
+    isNew: true,
+  },
+  'rmbg14-fp16': {
+    engine: 'ort',
+    url: 'https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model_fp16.onnx',
+    displayName: 'RMBG-1.4 · FP16',
+    tagline: 'Bria RMBG-1.4 half precision',
+    sizeLabel: '~88 MB',
+    inputSize: 1024,
+    mean: [0.5, 0.5, 0.5],
+    std: [1.0, 1.0, 1.0],
+    applySigmoid: true,
+    tag: 'browser',
+    isNew: true,
+  },
+  'rmbg14-full': {
+    engine: 'ort',
+    url: 'https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model.onnx',
+    displayName: 'RMBG-1.4 · Full',
+    tagline: 'Bria RMBG-1.4 full precision · sharpest',
+    sizeLabel: '~176 MB',
+    inputSize: 1024,
+    mean: [0.5, 0.5, 0.5],
+    std: [1.0, 1.0, 1.0],
+    applySigmoid: true,
+    tag: 'browser',
+    isNew: true,
+  },
+  'modnet-quant': {
+    engine: 'ort',
+    url: 'https://huggingface.co/Xenova/modnet/resolve/main/onnx/model_quantized.onnx',
+    displayName: 'MODNet · Quantized',
+    tagline: 'Portrait matting · tiny',
+    sizeLabel: '~7 MB',
+    inputSize: 512,
+    mean: [0.5, 0.5, 0.5],
+    std: [0.5, 0.5, 0.5],
+    applySigmoid: false,
+    tag: 'browser',
+    isNew: true,
+  },
+};
+
+const SERVER_MODELS = [
+  {
+    id: 'bria-rmbg14',
+    name: 'Bria RMBG-1.4',
+    repo: 'https://huggingface.co/briaai/RMBG-1.4',
+    desc: 'Also available in-browser above. Use this Python path for batch jobs & maximum fidelity.',
+    icon: 'fa-robot',
+    snippet:
+`# pip install torch transformers pillow
+from transformers import AutoModelForImageSegmentation
+from torchvision import transforms
+from PIL import Image
+import torch
+
+model = AutoModelForImageSegmentation.from_pretrained(
+    "briaai/RMBG-1.4", trust_remote_code=True
+).eval()
+
+pre = transforms.Compose([
+    transforms.Resize((1024, 1024)),
+    transforms.ToTensor(),
+    transforms.Normalize([0.5]*3, [1.0]*3),
+])
+
+img = Image.open("input.jpg").convert("RGB")
+tensor = pre(img).unsqueeze(0)
+with torch.no_grad():
+    mask = model(tensor)[-1].sigmoid().cpu()[0].squeeze()
+mask = transforms.ToPILImage()(mask).resize(img.size)
+
+out = img.copy()
+out.putalpha(mask)
+out.save("out.png")`,
+  },
+  {
+    id: 'rembg',
+    name: 'Rembg',
+    repo: 'https://github.com/danielgatis/rembg',
+    desc: 'Python library wrapping U2Net / ISNet / BiRefNet ONNX models. Runs fully offline. Also offers a CLI and HTTP server.',
+    icon: 'fa-terminal',
+    snippet:
+`# pip install rembg[cli]
+# Save transparent PNG (uses U2Net by default)
+rembg i input.jpg out.png
+
+# Pick a specific ONNX model
+rembg i -m isnet-general-use input.jpg out.png
+
+# HTTP server on :7000
+rembg s
+
+# Batch process a folder
+rembg p ./in ./out`,
+  },
+  {
+    id: 'withoutbg',
+    name: 'withoutBG',
+    repo: 'https://github.com/withoutbg/withoutbg-python',
+    desc: 'Python SDK — open weights run offline via ONNX (~455 MB first download). Same API switches to their Cloud API for higher quality.',
+    icon: 'fa-cube',
+    snippet:
+`# uv add withoutbg   (or: pip install withoutbg)
+
+from withoutbg import WithoutBG
+
+# Local — free, private, offline
+model = WithoutBG.open_weights()
+result = model.remove_background("photo.jpg")
+result.save("out.png")   # keeps transparency
+
+# Batch (load once, reuse)
+model.remove_background_batch(
+    ["a.jpg", "b.jpg"], output_dir="results/"
+)`,
+  },
+];
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const baseName = (n) => (n || 'file').replace(/\.[^.]+$/, '');
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+const loadImage = (src) => new Promise((res, rej) => {
+  const i = new Image();
+  i.crossOrigin = 'anonymous';
+  i.onload = () => res(i);
+  i.onerror = () => rej(new Error('Cannot load image'));
+  i.src = src;
+});
+
+const saveBlob = (blob, name) => {
+  const a = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 20000);
+};
+
+const loadScript = (src) => new Promise((res, rej) => {
+  const s = document.createElement('script');
+  s.src = src;
+  s.onload = res;
+  s.onerror = () => rej(new Error('Failed to load ' + src));
+  document.head.appendChild(s);
+});
+
+/* ============================================================
+   ONNX RUNTIME HELPERS
+   ============================================================ */
+function ensureORT() {
+  if (!window.ort) throw new Error('ONNX Runtime not loaded');
+  try {
+    window.ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
+    window.ort.env.wasm.numThreads = 1;
+    window.ort.env.wasm.simd = true;
+    window.ort.env.logLevel = 'error';
+  } catch (_) {}
+  return window.ort;
+}
+
+const sessionCache = new Map();
+
+async function getORTSession(url, onProgress) {
+  if (sessionCache.has(url)) return sessionCache.get(url);
+  const promise = (async () => {
+    const ort = ensureORT();
+    if (onProgress) onProgress('Downloading model…', 5);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Model fetch failed: HTTP ${res.status}`);
+    const total = parseInt(res.headers.get('content-length') || '0', 10);
+    const reader = res.body && res.body.getReader ? res.body.getReader() : null;
+
+    let buffer;
+    if (reader && total > 0) {
+      const chunks = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+        const pct = Math.min(95, Math.round((received / total) * 95));
+        if (onProgress) onProgress(`Downloading model… ${(received / 1048576).toFixed(1)} / ${(total / 1048576).toFixed(1)} MB`, pct);
+      }
+      const merged = new Uint8Array(received);
+      let off = 0;
+      for (const c of chunks) { merged.set(c, off); off += c.length; }
+      buffer = merged.buffer;
+    } else {
+      buffer = await res.arrayBuffer();
+    }
+
+    if (onProgress) onProgress('Initializing runtime…', 97);
+    const session = await ort.InferenceSession.create(buffer, {
+      executionProviders: ['wasm'],
+      graphOptimizationLevel: 'all',
+    });
+    if (onProgress) onProgress('Ready', 100);
+    return session;
+  })();
+  sessionCache.set(url, promise);
+  promise.catch(() => sessionCache.delete(url));
+  return promise;
+}
+
+function preprocessImage(bitmap, size, mean, std) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bitmap, 0, 0, size, size);
+  const data = ctx.getImageData(0, 0, size, size).data;
+
+  const planeSize = size * size;
+  const float32 = new Float32Array(3 * planeSize);
+  for (let i = 0; i < planeSize; i++) {
+    float32[i]                 = (data[i * 4]     / 255 - mean[0]) / std[0];
+    float32[planeSize + i]     = (data[i * 4 + 1] / 255 - mean[1]) / std[1];
+    float32[2 * planeSize + i] = (data[i * 4 + 2] / 255 - mean[2]) / std[2];
+  }
+  return float32;
+}
+
+async function buildMaskedImage(bitmap, outputData, outputDims, applySigmoid) {
+  let H, W;
+  if (outputDims.length === 4) { H = outputDims[2]; W = outputDims[3]; }
+  else if (outputDims.length === 3) { H = outputDims[1]; W = outputDims[2]; }
+  else { H = Math.round(Math.sqrt(outputData.length)); W = H; }
+
+  const planeSize = H * W;
+
+  let minV = Infinity, maxV = -Infinity;
+  for (let i = 0; i < planeSize; i++) {
+    let v = outputData[i];
+    if (applySigmoid) v = 1 / (1 + Math.exp(-v));
+    if (v < minV) minV = v;
+    if (v > maxV) maxV = v;
+  }
+  const range = (maxV - minV) || 1;
+
+  const maskCanvas = document.createElement('canvas');
+  maskCanvas.width = W; maskCanvas.height = H;
+  const maskCtx = maskCanvas.getContext('2d');
+  const maskImg = maskCtx.createImageData(W, H);
+  for (let i = 0; i < planeSize; i++) {
+    let v = outputData[i];
+    if (applySigmoid) v = 1 / (1 + Math.exp(-v));
+    const alpha = Math.round(((v - minV) / range) * 255);
+    maskImg.data[i * 4]     = alpha;
+    maskImg.data[i * 4 + 1] = alpha;
+    maskImg.data[i * 4 + 2] = alpha;
+    maskImg.data[i * 4 + 3] = 255;
+  }
+  maskCtx.putImageData(maskImg, 0, 0);
+
+  const origW = bitmap.width, origH = bitmap.height;
+  const upscaledMask = document.createElement('canvas');
+  upscaledMask.width = origW; upscaledMask.height = origH;
+  const upCtx = upscaledMask.getContext('2d');
+  upCtx.imageSmoothingEnabled = true;
+  upCtx.imageSmoothingQuality = 'high';
+  upCtx.drawImage(maskCanvas, 0, 0, origW, origH);
+  const maskData = upCtx.getImageData(0, 0, origW, origH);
+
+  const out = document.createElement('canvas');
+  out.width = origW; out.height = origH;
+  const outCtx = out.getContext('2d');
+  outCtx.drawImage(bitmap, 0, 0);
+  const imgData = outCtx.getImageData(0, 0, origW, origH);
+
+  for (let i = 0; i < imgData.data.length; i += 4) {
+    imgData.data[i + 3] = maskData.data[i];
+  }
+  outCtx.putImageData(imgData, 0, 0);
+
+  return new Promise((resolve, reject) => {
+    out.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png');
+  });
+}
+
+async function removeBackgroundWithModel(bitmap, modelKey, onProgress) {
+  const model = MODEL_REGISTRY[modelKey];
+  if (!model) throw new Error(`Unknown model: ${modelKey}`);
+
+  if (model.engine === 'imgly') {
+    const fn = window.__imglyRemoveBackground;
+    if (!fn) throw new Error('@imgly engine not loaded');
+    const srcCanvas = document.createElement('canvas');
+    srcCanvas.width = bitmap.width; srcCanvas.height = bitmap.height;
+    srcCanvas.getContext('2d').drawImage(bitmap, 0, 0);
+    const srcBlob = await new Promise((r) => srcCanvas.toBlob(r, 'image/png'));
+    const resultBlob = await fn(srcBlob, {
+      model: model.imglyModel,
+      output: { format: 'image/png' },
+      progress: (key, current, total) => {
+        if (onProgress && key && typeof current === 'number' && typeof total === 'number' && total > 0) {
+          onProgress(`${key} ${Math.round((current / total) * 100)}%`, Math.round((current / total) * 100));
+        }
+      },
+    });
+    return resultBlob;
+  }
+
+  if (model.engine === 'ort') {
+    const session = await getORTSession(model.url, onProgress);
+    if (onProgress) onProgress('Preparing input…', 100);
+
+    const inputTensor = preprocessImage(bitmap, model.inputSize, model.mean, model.std);
+    const ort = ensureORT();
+    const tensor = new ort.Tensor('float32', inputTensor, [1, 3, model.inputSize, model.inputSize]);
+
+    const inputName = session.inputNames[0];
+    const outputName = session.outputNames[0];
+
+    if (onProgress) onProgress('Running inference…', 100);
+    const outputs = await session.run({ [inputName]: tensor });
+    const output = outputs[outputName];
+
+    if (onProgress) onProgress('Compositing…', 100);
+    return buildMaskedImage(bitmap, output.data, output.dims, model.applySigmoid);
+  }
+
+  throw new Error(`Unsupported engine: ${model.engine}`);
+}
+
+/* ============================================================
+   FX CARD
+   ============================================================ */
+function FXCard({ children, className = '', disableFx = false, delay = 0 }) {
+  const [entering, setEntering] = useState(!disableFx);
+  useEffect(() => {
+    if (disableFx) return;
+    setEntering(true);
+    const t = setTimeout(() => setEntering(false), 1900 + delay);
+    return () => clearTimeout(t);
+  }, [disableFx, delay]);
+
+  const sparks = useMemo(() => {
+    const arr = [];
+    const count = 14;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
+      const dist = 90 + Math.random() * 90;
+      arr.push({
+        dx: `${Math.cos(angle) * dist}px`,
+        dy: `${Math.sin(angle) * dist}px`,
+        delay: `${(i * 0.025).toFixed(2)}s`,
+        dur: `${(0.7 + Math.random() * 0.5).toFixed(2)}s`,
+      });
+    }
+    return arr;
+  }, []);
+
+  return (
+    <div className={`resize-card ${entering ? 'entering' : ''} ${className}`}>
+      {!disableFx && (
+        <>
+          <div className="shoot-h" />
+          <div className="card-flash" />
+          <div className="card-ring" />
+          <div className="burst">
+            {sparks.map((s, i) => (
+              <span key={i} style={{ '--dx': s.dx, '--dy': s.dy, '--delay': s.delay, '--dur': s.dur }} />
+            ))}
+          </div>
+        </>
+      )}
+      <div className="fx-content">{children}</div>
+    </div>
+  );
+}
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+function Toasts({ toasts }) {
+  return (
+    <div className="toast-wrap">
+      {toasts.map((t) => (
+        <div key={t.id} className={`toast ${t.type}`}>
+          <i className={`fa-solid ${t.type === 'error' ? 'fa-circle-exclamation' : t.type === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`} />
+          <span>{t.msg}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ============================================================
+   CODE SNIPPET BLOCK
+   ============================================================ */
+function CodeBlock({ code, showToast }) {
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      if (showToast) showToast('Code copied to clipboard.', 'success');
+    } catch (_) {
+      if (showToast) showToast('Copy failed — select and copy manually.', 'error');
+    }
+  };
+  return (
+    <div className="code-block">
+      <button className="copy-btn" onClick={onCopy}>
+        <i className="fa-solid fa-copy" /> COPY
+      </button>
+      {code}
+    </div>
+  );
+}
+
+/* ============================================================
+   COMPARISON SLIDER
+   ============================================================ */
+function ComparisonSlider({ before, after, bgStyle, checker }) {
+  const [pos, setPos] = useState(50);
+  const ref = useRef(null);
+  const dragging = useRef(false);
+
+  const update = useCallback((clientX) => {
+    const el = ref.current; if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const p = ((clientX - rect.left) / rect.width) * 100;
+    setPos(Math.max(0, Math.min(100, p)));
+  }, []);
+
+  const onDown = (e) => {
+    dragging.current = true;
+    try { ref.current.setPointerCapture(e.pointerId); } catch (_) {}
+    update(e.clientX);
+  };
+  const onMove = (e) => { if (dragging.current) update(e.clientX); };
+  const onUp = () => { dragging.current = false; };
+
+  return (
+    <div className="cmp" ref={ref}
+      onPointerDown={onDown} onPointerMove={onMove}
+      onPointerUp={onUp} onPointerCancel={onUp} onPointerLeave={onUp}>
+      <img className="cmp-img" src={before} alt="Original" draggable="false" />
+      <div className={`cmp-overlay ${checker ? 'checkerboard' : ''}`}
+        style={{ ...bgStyle, clipPath: `inset(0 0 0 ${pos}%)` }}>
+        <img className="cmp-img" src={after} alt="Processed" draggable="false" />
+      </div>
+      <div className="cmp-handle" style={{ left: `${pos}%` }}>
+        <div className="cmp-knob"><i className="fa-solid fa-left-right" /></div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   IMAGE CARD
+   ============================================================ */
+function ImageCard({ item, index, engineStatus, engineError, onUpdate, onRemove, showToast }) {
+  const processing = item.processing;
+  const processed = item.processedUrl;
+  const modelMeta = MODEL_REGISTRY[item.model] || MODEL_REGISTRY['rmbg14-quant'];
+
+  const origW = item.origW, origH = item.origH;
+  const ratio = origW > 0 && origH > 0 ? origW / origH : 1;
+
+  const setModel = (m) => onUpdate(item.id, { model: m });
+
+  const runRemoveBg = useCallback(async () => {
+    if (processing) return;
+    onUpdate(item.id, {
+      processing: true, progress: 0, progressLabel: 'Preparing…', processedUrl: null
+    });
+    try {
+      const bitmap = await createImageBitmap(item.file);
+      const blob = await removeBackgroundWithModel(bitmap, item.model, (label, pct) => {
+        const patch = { progressLabel: label };
+        if (typeof pct === 'number') patch.progress = pct;
+        onUpdate(item.id, patch);
+      });
+      if (bitmap.close) bitmap.close();
+      const url = URL.createObjectURL(blob);
+      onUpdate(item.id, {
+        processedUrl: url, processing: false, progress: 100, progressLabel: 'Done'
+      });
+      showToast('Background removed.', 'success');
+    } catch (err) {
+      console.error(err);
+      onUpdate(item.id, {
+        processing: false,
+        progressLabel: 'Error: ' + (err.message || 'unknown')
+      });
+      showToast('Processing failed: ' + (err.message || 'unknown error'), 'error');
+    }
+  }, [item.id, item.file, item.model, processing, onUpdate, showToast]);
+
+  const onWidthChange = (e) => {
+    const v = parseInt(e.target.value, 10);
+    if (isNaN(v)) { onUpdate(item.id, { exportW: '' }); return; }
+    const patch = { exportW: v };
+    if (item.lockAspect && ratio > 0) patch.exportH = Math.max(1, Math.round(v / ratio));
+    onUpdate(item.id, patch);
+  };
+  const onHeightChange = (e) => {
+    const v = parseInt(e.target.value, 10);
+    if (isNaN(v)) { onUpdate(item.id, { exportH: '' }); return; }
+    const patch = { exportH: v };
+    if (item.lockAspect && ratio > 0) patch.exportW = Math.max(1, Math.round(v * ratio));
+    onUpdate(item.id, patch);
+  };
+
+  const buildBackground = (ctx, w, h) => {
+    if (item.transparent) return;
+    if (item.useGradient) {
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, item.color1); g.addColorStop(1, item.color2); ctx.fillStyle = g;
+    } else ctx.fillStyle = item.color1;
+    ctx.fillRect(0, 0, w, h);
+  };
+
+  const download = async () => {
+    if (!processed) return;
+    const w = parseInt(item.exportW, 10) || origW;
+    const h = parseInt(item.exportH, 10) || origH;
+    if (w < 1 || h < 1) { showToast('Invalid dimensions.', 'error'); return; }
+    try {
+      const img = await loadImage(processed);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      buildBackground(ctx, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      const mime = item.format === 'webp' ? 'image/webp' : 'image/png';
+      const quality = item.format === 'webp' ? 0.92 : undefined;
+      canvas.toBlob((blob) => {
+        if (!blob) { showToast('Export failed.', 'error'); return; }
+        const suffix = (w !== origW || h !== origH) ? `-${w}x${h}` : '';
+        saveBlob(blob, `${baseName(item.name)}_${item.model}${suffix}.${item.format}`);
+        showToast('Downloaded.', 'success');
+      }, mime, quality);
+    } catch (err) { showToast('Download failed: ' + err.message, 'error'); }
+  };
+
+  const bgStyle = item.transparent
+    ? {}
+    : item.useGradient
+      ? { background: `linear-gradient(135deg, ${item.color1}, ${item.color2})` }
+      : { background: item.color1 };
+
+  const ready = !!processed;
+
+  return (
+    <FXCard delay={index * 90}>
+      <button className="remove-btn" title="Remove image" onClick={() => onRemove(item.id)}>
+        <i className="fa-solid fa-xmark" />
+      </button>
+
+      <div className="filebar" style={{ paddingRight: 36 }}>
+        <img className="thumb" src={item.url} alt="" />
+        <div className="meta">
+          <div className="n">{item.name}</div>
+          <div className="d">{origW} × {origH} px · {item.sizeLabel || ''}</div>
+        </div>
+      </div>
+
+      {/* Preview */}
+      {ready && !processing ? (
+        <ComparisonSlider
+          before={item.url}
+          after={processed}
+          bgStyle={bgStyle}
+          checker={item.transparent}
+        />
+      ) : (
+        <div className="img-loader">
+          <img src={item.url} alt="loading" />
+          <div className="spinner-overlay">
+            <div className="spinner" />
+            <div className="label">
+              {processing ? (item.progressLabel || 'Processing…') : 'Ready — click Remove background'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {processing && (
+        <div className="progress-wrap">
+          <div className="progress">
+            <div className={`progress-bar ${item.progress >= 100 ? 'indet' : ''}`}
+              style={{ width: `${Math.max(2, item.progress || 0)}%` }} />
+          </div>
+          <div className="progress-text">
+            {item.progressLabel} {item.progress > 0 ? `${item.progress}%` : ''}
+          </div>
+        </div>
+      )}
+
+      <div style={{ height: 12 }} />
+
+      {/* Model selector */}
+      <div className="field" style={{ marginBottom: 8 }}>
+        <label className="label">Model</label>
+        <select className="select" value={item.model} disabled={processing}
+          onChange={(e) => setModel(e.target.value)}>
+          <optgroup label="ISNet (via @imgly)">
+            {Object.keys(MODEL_REGISTRY).filter(k => MODEL_REGISTRY[k].engine === 'imgly').map(k => (
+              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+            ))}
+          </optgroup>
+          <optgroup label="RMBG-1.4 (Bria) · ONNX">
+            {Object.keys(MODEL_REGISTRY).filter(k => k.startsWith('rmbg14')).map(k => (
+              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+            ))}
+          </optgroup>
+          <optgroup label="MODNet (portrait) · ONNX">
+            {Object.keys(MODEL_REGISTRY).filter(k => k.startsWith('modnet')).map(k => (
+              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+            ))}
+          </optgroup>
+        </select>
+        <div className="hint">{modelMeta.tagline}</div>
+      </div>
+
+      <button className="btn-primary" disabled={processing} onClick={runRemoveBg}>
+        {processing
+          ? <><span className="mini-spinner" /> Processing…</>
+          : <><i className="fa-solid fa-wand-magic-sparkles" /> Remove background</>}
+      </button>
+
+      {engineStatus === 'error' && (
+        <div className="warn-banner err" style={{ marginTop: 10, marginBottom: 0 }}>
+          <i className="fa-solid fa-triangle-exclamation" />
+          <div><b>Engine warning.</b> {engineError || 'Some models may not load.'}</div>
+        </div>
+      )}
+
+      <div className="divider" />
+
+      {/* Export controls */}
+      <div className="row2">
+        <div className="field">
+          <label className="label">Width</label>
+          <input className="size-input" type="number" min="1"
+            value={item.exportW} onChange={onWidthChange} disabled={!ready} />
+        </div>
+        <div className="field">
+          <label className="label">Height</label>
+          <input className="size-input" type="number" min="1"
+            value={item.exportH} onChange={onHeightChange} disabled={!ready} />
+        </div>
+      </div>
+      <label className="check">
+        <input type="checkbox" checked={item.lockAspect}
+          onChange={(e) => onUpdate(item.id, { lockAspect: e.target.checked })} />
+        Lock aspect ratio
+      </label>
+
+      <div className="field" style={{ marginTop: 6 }}>
+        <label className="label">Format</label>
+        <select className="select" value={item.format}
+          onChange={(e) => onUpdate(item.id, { format: e.target.value })}>
+          <option value="png">PNG — lossless / transparency</option>
+          <option value="webp">WebP — smaller, transparency</option>
+        </select>
+      </div>
+
+      <label className="check">
+        <input type="checkbox" checked={item.transparent}
+          onChange={(e) => onUpdate(item.id, { transparent: e.target.checked })} />
+        Transparent background
+      </label>
+
+      {!item.transparent && (
+        <>
+          <div className="row2" style={{ marginTop: 6 }}>
+            <div className="field">
+              <label className="label">{item.useGradient ? 'Color A' : 'Color'}</label>
+              <input type="color" value={item.color1}
+                onChange={(e) => onUpdate(item.id, { color1: e.target.value })} />
+            </div>
+            {item.useGradient && (
+              <div className="field">
+                <label className="label">Color B</label>
+                <input type="color" value={item.color2}
+                  onChange={(e) => onUpdate(item.id, { color2: e.target.value })} />
+              </div>
+            )}
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={item.useGradient}
+              onChange={(e) => onUpdate(item.id, { useGradient: e.target.checked })} />
+            Gradient fill
+          </label>
+        </>
+      )}
+
+      <button className="btn-primary" style={{ marginTop: 10 }}
+        disabled={!ready || processing} onClick={download}>
+        <i className="fa-solid fa-download" /> Download {item.format.toUpperCase()}
+      </button>
+    </FXCard>
+  );
+}
+
+/* ============================================================
+   VIDEO PROCESSING
+   ============================================================ */
+const MAX_VIDEO_DURATION = 1.5;
+const VIDEO_FPS = 8;
+
+async function extractAndProcessFrames(videoFile, modelKey, onProgress) {
+  const video = document.createElement('video');
+  video.muted = true; video.playsInline = true; video.preload = 'auto';
+  video.src = URL.createObjectURL(videoFile);
+  await new Promise((res, rej) => {
+    video.onloadedmetadata = res;
+    video.onerror = () => rej(new Error('Cannot decode video'));
+  });
+
+  const duration = Math.min(video.duration || MAX_VIDEO_DURATION, MAX_VIDEO_DURATION);
+  const frameCount = Math.max(2, Math.floor(duration * VIDEO_FPS));
+  const w = video.videoWidth || 640; const h = video.videoHeight || 360;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  const frames = [];
+  for (let i = 0; i < frameCount; i++) {
+    video.currentTime = i / VIDEO_FPS;
+    await new Promise((res) => { video.onseeked = res; });
+    ctx.drawImage(video, 0, 0, w, h);
+    const bitmap = await createImageBitmap(canvas);
+    const processedBlob = await removeBackgroundWithModel(bitmap, modelKey, null);
+    if (bitmap.close) bitmap.close();
+    frames.push({ blob: processedBlob });
+    if (onProgress) onProgress(Math.round(((i + 1) / frameCount) * 70), `Frame ${i + 1} / ${frameCount}`);
+  }
+  URL.revokeObjectURL(video.src);
+  return { frames, w, h };
+}
+
+async function encodeFramesToWebM(frames, w, h, onProgress) {
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width = w; outCanvas.height = h;
+  const outCtx = outCanvas.getContext('2d');
+  const stream = outCanvas.captureStream(VIDEO_FPS);
+  const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4_000_000 });
+  const chunks = [];
+  rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.start(100);
+  for (let i = 0; i < frames.length; i++) {
+    const bitmap = await createImageBitmap(frames[i].blob);
+    outCtx.clearRect(0, 0, w, h);
+    outCtx.drawImage(bitmap, 0, 0, w, h);
+    if (bitmap.close) bitmap.close();
+    await sleep(1000 / VIDEO_FPS);
+    if (onProgress) onProgress(70 + Math.round(((i + 1) / frames.length) * 30));
+  }
+  await sleep(220);
+  rec.stop();
+  await new Promise((r) => { rec.onstop = r; });
+  return new Blob(chunks, { type: 'video/webm' });
+}
+
+const GIFJS_URL = 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js';
+const GIFJS_WORKER = 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js';
+async function encodeFramesToGif(frames, w, h, onProgress) {
+  if (!window.GIF) await loadScript(GIFJS_URL);
+  const workerCode = await (await fetch(GIFJS_WORKER)).text();
+  const workerURL = URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' }));
+  const MAXW = 480;
+  const scale = Math.min(1, MAXW / w);
+  const gw = Math.max(2, Math.round(w * scale));
+  const gh = Math.max(2, Math.round(h * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = gw; canvas.height = gh;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const gif = new window.GIF({
+    workers: 2, quality: 10, width: gw, height: gh,
+    workerScript: workerURL, transparent: 0x00000000,
+  });
+  for (let i = 0; i < frames.length; i++) {
+    const bitmap = await createImageBitmap(frames[i].blob);
+    ctx.clearRect(0, 0, gw, gh);
+    ctx.drawImage(bitmap, 0, 0, gw, gh);
+    if (bitmap.close) bitmap.close();
+    gif.addFrame(ctx, { copy: true, delay: 1000 / VIDEO_FPS });
+    if (onProgress) onProgress(70 + Math.round(((i + 1) / frames.length) * 20));
+  }
+  return new Promise((resolve, reject) => {
+    gif.on('progress', (p) => onProgress && onProgress(90 + Math.round(p * 10)));
+    gif.on('finished', (blob) => { URL.revokeObjectURL(workerURL); resolve(blob); });
+    try { gif.render(); } catch (e) { reject(e); }
+  });
+}
+
+function VideoCard({ item, index, onUpdate, onRemove, showToast }) {
+  const processing = item.processing;
+  const processed = item.processedUrl;
+  const modelMeta = MODEL_REGISTRY[item.model] || MODEL_REGISTRY['rmbg14-quant'];
+
+  const runVideo = async () => {
+    if (processing) return;
+    onUpdate(item.id, { processing: true, progress: 0, progressLabel: 'Decoding video…', processedUrl: null });
+    try {
+      const result = await extractAndProcessFrames(item.file, item.model, (p, label) => {
+        onUpdate(item.id, { progress: p, progressLabel: label });
+      });
+      onUpdate(item.id, { progressLabel: 'Encoding video…' });
+      const out = item.format === 'gif'
+        ? await encodeFramesToGif(result.frames, result.w, result.h, (p) => onUpdate(item.id, { progress: p }))
+        : await encodeFramesToWebM(result.frames, result.w, result.h, (p) => onUpdate(item.id, { progress: p }));
+      const url = URL.createObjectURL(out);
+      onUpdate(item.id, { processedUrl: url, processing: false, progress: 100, progressLabel: 'Done' });
+      showToast('Video processed.', 'success');
+    } catch (err) {
+      console.error(err);
+      onUpdate(item.id, { processing: false, progressLabel: 'Error: ' + (err.message || 'unknown') });
+      showToast('Video processing failed: ' + (err.message || 'unknown'), 'error');
+    }
+  };
+
+  const downloadVideo = async () => {
+    if (!processed) return;
+    try {
+      const srcBlob = await (await fetch(processed)).blob();
+      const ext = srcBlob.type.includes('gif') ? 'gif' : 'webm';
+      saveBlob(srcBlob, `${baseName(item.name)}_${item.model}.${ext}`);
+      showToast('Downloaded.', 'success');
+    } catch (err) { showToast('Download failed: ' + err.message, 'error'); }
+  };
+
+  return (
+    <FXCard delay={index * 90}>
+      <button className="remove-btn" title="Remove video" onClick={() => onRemove(item.id)}>
+        <i className="fa-solid fa-xmark" />
+      </button>
+
+      <div className="filebar" style={{ paddingRight: 36 }}>
+        <div className="thumb" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <i className="fa-solid fa-film" style={{ color: 'var(--gold)' }} />
+        </div>
+        <div className="meta">
+          <div className="n">{item.name}</div>
+          <div className="d">Video · max {MAX_VIDEO_DURATION}s · {VIDEO_FPS} fps</div>
+        </div>
+      </div>
+
+      <video className="preview" src={processed || item.url}
+        controls playsInline loop muted={!processed} />
+
+      {processing && (
+        <div className="progress-wrap">
+          <div className="progress">
+            <div className={`progress-bar ${item.progress >= 100 ? 'indet' : ''}`}
+              style={{ width: `${Math.max(2, item.progress || 0)}%` }} />
+          </div>
+          <div className="progress-text">
+            {item.progressLabel} {item.progress > 0 ? `${item.progress}%` : ''}
+          </div>
+        </div>
+      )}
+
+      <div style={{ height: 12 }} />
+
+      <div className="field">
+        <label className="label">Model</label>
+        <select className="select" value={item.model} disabled={processing}
+          onChange={(e) => onUpdate(item.id, { model: e.target.value })}>
+          <optgroup label="ISNet (via @imgly)">
+            {Object.keys(MODEL_REGISTRY).filter(k => MODEL_REGISTRY[k].engine === 'imgly').map(k => (
+              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+            ))}
+          </optgroup>
+          <optgroup label="RMBG-1.4 (Bria) · ONNX">
+            {Object.keys(MODEL_REGISTRY).filter(k => k.startsWith('rmbg14')).map(k => (
+              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+            ))}
+          </optgroup>
+          <optgroup label="MODNet (portrait) · ONNX">
+            {Object.keys(MODEL_REGISTRY).filter(k => k.startsWith('modnet')).map(k => (
+              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+            ))}
+          </optgroup>
+        </select>
+        <div className="hint">{modelMeta.tagline}</div>
+      </div>
+
+      <div className="field">
+        <label className="label">Format</label>
+        <select className="select" value={item.format} disabled={processing || !!processed}
+          onChange={(e) => onUpdate(item.id, { format: e.target.value })}>
+          <option value="webm">WebM — animated, alpha-friendly</option>
+          <option value="gif">GIF — animated, small</option>
+        </select>
+      </div>
+
+      {!processed ? (
+        <button className="btn-primary" disabled={processing} onClick={runVideo}>
+          {processing
+            ? <><span className="mini-spinner" /> Processing…</>
+            : <><i className="fa-solid fa-wand-magic-sparkles" /> Process video</>}
+        </button>
+      ) : (
+        <>
+          <button className="btn-secondary" style={{ width: '100%', marginBottom: 8 }}
+            onClick={() => onUpdate(item.id, { processedUrl: null, progress: 0 })}>
+            <i className="fa-solid fa-rotate-left" /> Re-process
+          </button>
+          <button className="btn-primary" onClick={downloadVideo}>
+            <i className="fa-solid fa-download" /> Download {item.format.toUpperCase()}
+          </button>
+        </>
+      )}
+    </FXCard>
+  );
+}
+
+/* ============================================================
+   SERVER-SIDE / PYTHON REFERENCE
+   ============================================================ */
+function ServerSideReference({ showToast }) {
+  const [openId, setOpenId] = useState(null);
+  return (
+    <FXCard>
+      <div className="card-title"><i className="fa-solid fa-server" /> Server-side / Python</div>
+      <div className="hint" style={{ marginTop: 0, marginBottom: 10 }}>
+        Same model families, running on your own infrastructure — offline, private, unlimited.
+        Ideal for batch jobs, backends, or when you need the sharpest edges.
+      </div>
+      <div className="tool-list">
+        {SERVER_MODELS.map((m) => {
+          const open = openId === m.id;
+          return (
+            <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div className="tool-item" style={{ cursor: 'pointer' }}
+                onClick={() => setOpenId(open ? null : m.id)}>
+                <div className="tool-icon"><i className={`fa-solid ${m.icon}`} /></div>
+                <div className="tool-body">
+                  <div className="tool-name">{m.name}</div>
+                  <div className="tool-desc">{m.desc}</div>
+                </div>
+                <span className="tag-pill server">PYTHON</span>
+                <a href={m.repo} target="_blank" rel="noreferrer" className="tool-open"
+                  onClick={(e) => e.stopPropagation()} title="Open repo">
+                  <i className="fa-solid fa-arrow-up-right-from-square" />
+                </a>
+              </div>
+              {open && (
+                <div style={{ paddingLeft: 4, paddingRight: 4, marginBottom: 6 }}>
+                  <CodeBlock code={m.snippet} showToast={showToast} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="hint" style={{ marginTop: 10 }}>
+        <i className="fa-solid fa-circle-info" style={{ color: 'var(--gold)' }} />{' '}
+        Rembg and withoutBG are Python-only — the browser versions use the same underlying
+        ONNX model families (ISNet, U2Net-family, RMBG).
+      </div>
+    </FXCard>
+  );
+}
+
+/* ============================================================
+   MAIN APP
+   ============================================================ */
+function App() {
+  const [toasts, setToasts] = useState([]);
+  const [engineStatus, setEngineStatus] = useState(
+    window.__imglyReady ? 'ready' : window.__imglyError ? 'error' : 'loading'
+  );
+  const [engineError, setEngineError] = useState(window.__imglyError || null);
+  const [items, setItems] = useState([]);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const showToast = useCallback((msg, type = 'error') => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts((t) => [...t, { id, msg, type }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4800);
+  }, []);
+
+  useEffect(() => {
+    if (engineStatus === 'ready') return;
+    const onReady = () => setEngineStatus('ready');
+    const onError = () => { setEngineStatus('error'); setEngineError(window.__imglyError || 'Failed to load @imgly'); };
+    window.addEventListener('imgly-ready', onReady);
+    window.addEventListener('imgly-error', onError);
+    return () => {
+      window.removeEventListener('imgly-ready', onReady);
+      window.removeEventListener('imgly-error', onError);
+    };
+  }, [engineStatus]);
+
+  const updateItem = useCallback((id, patch) => {
+    setItems((list) => list.map((it) => it.id === id ? { ...it, ...patch } : it));
+  }, []);
+
+  const removeItem = useCallback((id) => {
+    setItems((list) => {
+      const target = list.find((x) => x.id === id);
+      if (target) {
+        try { URL.revokeObjectURL(target.url); } catch (_) {}
+        if (target.processedUrl) { try { URL.revokeObjectURL(target.processedUrl); } catch (_) {} }
+      }
+      return list.filter((x) => x.id !== id);
+    });
+  }, []);
+
+  const addFiles = useCallback(async (files) => {
+    const arr = Array.from(files || []);
+    if (!arr.length) return;
+    const accepted = arr.filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
+    if (!accepted.length) { showToast('Unsupported files.', 'error'); return; }
+
+    const newItems = [];
+    for (const f of accepted) {
+      const isVideo = f.type.startsWith('video/');
+      const url = URL.createObjectURL(f);
+      const id = uid();
+      let w = 0, h = 0;
+      if (!isVideo) {
+        try {
+          const img = await loadImage(url);
+          w = img.naturalWidth; h = img.naturalHeight;
+        } catch (_) {}
+      }
+      const sizeKb = (f.size / 1024).toFixed(1);
+      const sizeLabel = f.size > 1048576
+        ? `${(f.size / 1048576).toFixed(2)} MB`
+        : `${sizeKb} KB`;
+
+      newItems.push({
+        id,
+        file: f,
+        url,
+        name: f.name || (isVideo ? 'video' : 'image'),
+        type: isVideo ? 'video' : 'image',
+        origW: w, origH: h,
+        sizeLabel,
+        model: 'rmbg14-quant',
+        processedUrl: null,
+        processing: false,
+        progress: 0,
+        progressLabel: '',
+        exportW: w || 0,
+        exportH: h || 0,
+        lockAspect: true,
+        format: isVideo ? 'webm' : 'png',
+        transparent: true,
+        color1: '#f0b960',
+        color2: '#7850c8',
+        useGradient: true,
+      });
+    }
+    setItems((list) => [...list, ...newItems]);
+    showToast(`${newItems.length} file${newItems.length > 1 ? 's' : ''} added.`, 'success');
+  }, [showToast]);
+
+  const onDrop = (e) => {
+    e.preventDefault(); setDragOver(false);
+    addFiles(e.dataTransfer.files);
+  };
+
+  useEffect(() => {
+    const onPaste = (e) => {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile();
+          if (blob) addFiles([new File([blob], 'pasted-image.png', { type: blob.type })]);
+          break;
+        }
+      }
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, [addFiles]);
+
+  const clearAll = () => {
+    items.forEach((it) => {
+      try { URL.revokeObjectURL(it.url); } catch (_) {}
+      if (it.processedUrl) { try { URL.revokeObjectURL(it.processedUrl); } catch (_) {} }
+    });
+    setItems([]);
+  };
+
+  const imageItems = items.filter((it) => it.type === 'image');
+  const videoItems = items.filter((it) => it.type === 'video');
+
+  return (
+    <>
+      <div className="layer">
+
+        <header className="topbar">
+          <a className="brand" href="#" onClick={(e) => e.preventDefault()}>
+            <div className="brand-logo"><i className="fa-solid fa-wand-magic-sparkles" /></div>
+            <div className="brand-txt">
+              <h1>HEX</h1>
+              <p>Cosmic Background Remover &amp; Resizer</p>
+            </div>
+          </a>
+          <div className="topbar-spacer" />
+          <span className={`pill ${engineStatus === 'ready' ? 'ok' : engineStatus === 'error' ? 'err' : ''}`}>
+            {engineStatus === 'ready' && <><i className="fa-solid fa-circle-check" /> Engines ready</>}
+            {engineStatus === 'loading' && <><span className="mini-spinner" /> Loading…</>}
+            {engineStatus === 'error' && <><i className="fa-solid fa-circle-exclamation" /> Engine issue</>}
+          </span>
+        </header>
+
+        <main className="container">
+
+          <section className="hero">
+            <h2>Remove backgrounds <span className="glow-text">in your browser</span></h2>
+            <p>
+              ISNet · RMBG-1.4 · MODNet — running locally via ONNX Runtime Web.
+              Drop multiple images, remove backgrounds per-card, resize each individually,
+              and export as PNG or WebP. Everything stays on your device.
+            </p>
+          </section>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+            <span className="pill ok hero-pulse"><i className="fa-solid fa-shield-halved" /> 100% local</span>
+            <span className="pill info"><i className="fa-solid fa-cube" /> RMBG-1.4 · MODNet · ISNet</span>
+            <span className="pill"><i className="fa-solid fa-layer-group" /> Multi-image</span>
+          </div>
+
+          {/* Drop zone */}
+          <div style={{ marginBottom: 14 }}>
+            <div className={`drop-zone ${dragOver ? 'dragging' : ''}`} tabIndex={0}
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current && fileInputRef.current.click(); }}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+              onDrop={onDrop}>
+              <div className="dz-icon"><i className="fa-solid fa-cloud-arrow-up" /></div>
+              <h3>Drop images or videos here</h3>
+              <p>or click to browse — paste with Ctrl / ⌘ + V</p>
+              <div className="dz-badge">
+                <i className="fa-solid fa-shield-halved" />
+                100% client-side · ONNX Runtime Web · no API
+              </div>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple
+              style={{ display: 'none' }}
+              onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
+          </div>
+
+          {/* Toolbar */}
+          {items.length > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: 10, marginBottom: 14, flexWrap: 'wrap'
+            }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>
+                <span style={{ color: 'var(--gold-l)' }}>{items.length}</span> {items.length === 1 ? 'item' : 'items'} loaded
+              </p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button className="btn-secondary"
+                  onClick={() => fileInputRef.current && fileInputRef.current.click()}>
+                  <i className="fa-solid fa-plus" /> Add more
+                </button>
+                <button className="btn-secondary" onClick={clearAll}>
+                  <i className="fa-solid fa-xmark" /> Clear all
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Grid of image cards */}
+          {imageItems.length > 0 && (
+            <div className="img-grid" style={{ marginBottom: 14 }}>
+              {imageItems.map((it, i) => (
+                <ImageCard
+                  key={it.id}
+                  item={it}
+                  index={i}
+                  engineStatus={engineStatus}
+                  engineError={engineError}
+                  onUpdate={updateItem}
+                  onRemove={removeItem}
+                  showToast={showToast}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Video cards */}
+          {videoItems.length > 0 && (
+            <div className="img-grid" style={{ marginBottom: 14 }}>
+              {videoItems.map((it, i) => (
+                <VideoCard
+                  key={it.id}
+                  item={it}
+                  index={i}
+                  onUpdate={updateItem}
+                  onRemove={removeItem}
+                  showToast={showToast}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Server-side reference */}
+          <div style={{ marginTop: 6 }}>
+            <ServerSideReference showToast={showToast} />
+          </div>
+
+        </main>
+
+        <footer className="footer">
+          <p style={{ margin: '0 0 6px' }}>
+            All processing happens locally in your browser. Only ONNX model files are
+            downloaded once from public CDNs and cached by your browser.
+          </p>
+          <p style={{ margin: 0 }}>HEX — cosmic edition · {new Date().getFullYear()}</p>
+        </footer>
+      </div>
+
+      <Toasts toasts={toasts} />
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
