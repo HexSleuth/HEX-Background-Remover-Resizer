@@ -9,9 +9,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 /* ============================================================
    BASE
@@ -21,21 +18,28 @@
   --card:rgba(17,17,24,.65);--border:#23232e;--border-2:#2f2f3d;
   --text:#e8e6e3;--muted:#8a8696;--danger:#ff5a5a;--ok:#43d17c;
   --radius:14px;
+  --blue:#8ac6ff;--blue-d:#5aa9e6;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;height:100%}
+html,body{margin:0;padding:0;min-height:100%}
 body{
   background:var(--bg);color:var(--text);
   font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
   display:flex;flex-direction:column;position:relative;
 }
+#root{display:flex;flex-direction:column;flex:1;position:relative;z-index:1}
 .mono{font-family:'JetBrains Mono',monospace}
 ::selection{background:rgba(212,148,58,.35)}
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:#0a0a11}
 ::-webkit-scrollbar-thumb{background:#26262f;border-radius:8px;border:2px solid #0a0a11}
 ::-webkit-scrollbar-thumb:hover{background:#3a3a48}
+
+input,textarea,select,.size-input,.select,.input{
+  -webkit-user-select:text !important;
+  user-select:text !important;
+}
 
 /* ============================================================
    GALAXY BACKGROUND
@@ -58,10 +62,11 @@ body{
   100%{transform:translate(40px,-30px) scale(1.1)}
 }
 
-.layer{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+.layer{position:relative;z-index:1;display:flex;flex-direction:column;
+  min-height:100vh;min-height:100dvh;flex:1}
 
 /* ============================================================
-   TOPBAR / HEADER
+   TOPBAR
    ============================================================ */
 .topbar{
   position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:12px;
@@ -81,7 +86,7 @@ body{
 .topbar-spacer{flex:1}
 
 /* ============================================================
-   CONTAINER
+   CONTAINER / HERO
    ============================================================ */
 .container{width:100%;max-width:1240px;margin:0 auto;padding:18px 14px 60px;flex:1}
 .hero{text-align:center;margin:14px 0 20px}
@@ -114,7 +119,6 @@ body{
 }
 .card-title i{color:var(--gold)}
 
-/* Remove Button */
 .remove-btn{
   position:absolute;top:12px;right:12px;width:28px;height:28px;
   border-radius:6px;background:rgba(255,255,255,.05);
@@ -126,7 +130,6 @@ body{
   background:rgba(220,50,50,.15);border-color:rgba(220,50,50,.5);color:#ff8a8a;
 }
 
-/* Shooting star */
 .shoot-h{
   position:absolute;left:-60%;top:0;width:60%;height:200%;
   transform:skewX(-20deg);z-index:20;pointer-events:none;opacity:0;
@@ -148,8 +151,6 @@ body{
   15%{opacity:1}
   100%{left:120%;opacity:0}
 }
-
-/* Flash */
 .card-flash{
   position:absolute;inset:0;z-index:15;pointer-events:none;opacity:0;
   background:radial-gradient(circle at center,rgba(255,255,255,.8),rgba(240,185,96,.4) 40%,transparent 70%);
@@ -161,8 +162,6 @@ body{
   30%{opacity:1;transform:scale(1)}
   100%{opacity:0;transform:scale(1.5)}
 }
-
-/* Ring */
 .card-ring{
   position:absolute;inset:0;border-radius:var(--radius);
   border:2px solid rgba(240,185,96,.8);
@@ -173,8 +172,6 @@ body{
   0%{opacity:1;transform:scale(.9)}
   100%{opacity:0;transform:scale(1.1)}
 }
-
-/* Burst */
 .burst{position:absolute;left:50%;top:50%;width:0;height:0;z-index:25;pointer-events:none}
 .burst span{
   position:absolute;left:0;top:0;width:5px;height:5px;border-radius:50%;
@@ -191,8 +188,6 @@ body{
   20%{opacity:1;transform:translate(-50%,-50%) translate(0,0) scale(1.4)}
   100%{transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(0);opacity:0}
 }
-
-/* Card entrance */
 @keyframes cardEnter{
   0%{opacity:0;transform:translateY(20px) scale(.92);filter:brightness(1.8)}
   60%{opacity:1;transform:translateY(0) scale(1.02);filter:brightness(1.3)}
@@ -264,11 +259,26 @@ body{
 .btn-secondary:hover{border-color:var(--gold);color:var(--gold-l)}
 .btn-secondary:disabled{opacity:.42;cursor:not-allowed}
 
-.size-input,.select,.input{
+.btn-blue{
+  background:linear-gradient(135deg,#5aa9e6,#2b6fa3);
+  color:#fff;font-weight:700;border:none;border-radius:8px;
+  padding:11px;cursor:pointer;transition:.3s;width:100%;font-size:13.5px;
+  position:relative;z-index:2;font-family:inherit;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-blue:disabled{opacity:.42;cursor:not-allowed}
+.btn-blue:not(:disabled):hover{
+  box-shadow:0 6px 24px rgba(90,169,230,.35);transform:translateY(-1px);
+}
+
+.size-input,.select,.input,.text-input{
   background:#0e0e15;border:1px solid var(--border-2);border-radius:8px;
   padding:9px 10px;color:var(--text);
   font-family:'JetBrains Mono',monospace;font-size:13px;
   width:100%;transition:.2s;position:relative;z-index:2;appearance:none;
+}
+.text-input{
+  font-family:'DM Sans',sans-serif;font-size:13px;
 }
 .size-input{text-align:center;font-size:14px}
 .select{
@@ -278,7 +288,7 @@ body{
   background-size:20px;padding-right:28px;cursor:pointer;
 }
 .select option{background:#0e0e15;color:var(--text)}
-.size-input:focus,.select:focus,.input:focus{
+.size-input:focus,.select:focus,.input:focus,.text-input:focus{
   outline:none;border-color:var(--gold);
   box-shadow:0 0 0 3px rgba(212,148,58,.15);
 }
@@ -296,6 +306,8 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:6px}
   position:relative;z-index:2;
 }
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:600px){.row3{grid-template-columns:1fr 1fr}}
 .check{
   display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text);
   cursor:pointer;user-select:none;padding:5px 0;position:relative;z-index:2;
@@ -378,7 +390,6 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:6px}
   letter-spacing:.06em;text-align:center;padding:0 12px;
 }
 
-/* Comparison slider */
 .cmp{
   position:relative;width:100%;overflow:hidden;border-radius:12px;
   border:1px solid var(--border-2);background:#0b0b12;line-height:0;
@@ -462,6 +473,9 @@ video.preview{
 .warn-banner.err{background:rgba(255,90,90,.08);border-color:rgba(255,90,90,.32);color:#ffc0c0}
 .warn-banner.err i{color:var(--danger)}
 .warn-banner.err b{color:#ff9090}
+.warn-banner.info-b{background:rgba(90,169,230,.08);border-color:rgba(90,169,230,.3);color:#b8ddff}
+.warn-banner.info-b i{color:var(--blue)}
+.warn-banner.info-b b{color:var(--blue)}
 
 .hero-pulse{animation:pulse 3s ease-in-out infinite}
 @keyframes pulse{
@@ -470,7 +484,7 @@ video.preview{
 }
 
 /* ============================================================
-   TOOLS / CODE
+   TOOLS / CODE / LIBRARIES
    ============================================================ */
 .tool-list{display:flex;flex-direction:column;gap:6px;position:relative;z-index:3}
 .tool-item{
@@ -485,6 +499,10 @@ video.preview{
   display:flex;align-items:center;justify-content:center;
   color:var(--gold-l);font-size:12px;
 }
+.tool-icon.blue{
+  background:linear-gradient(135deg,rgba(90,169,230,.18),rgba(90,169,230,.06));
+  border-color:rgba(90,169,230,.3);color:var(--blue);
+}
 .tool-body{flex:1;min-width:0}
 .tool-name{font-size:12px;font-weight:700;color:var(--text);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -495,6 +513,7 @@ video.preview{
   background:rgba(212,148,58,.08);border:1px solid rgba(212,148,58,.25);
   color:var(--gold-l);cursor:pointer;transition:.15s;
   display:flex;align-items:center;justify-content:center;font-size:10px;
+  text-decoration:none;
 }
 .tool-open:hover{background:var(--gold);color:#0a0a0f;border-color:var(--gold)}
 
@@ -522,6 +541,104 @@ video.preview{
   background:rgba(90,169,230,.12);color:#8ac6ff;
   border:1px solid rgba(90,169,230,.32);
 }
+.tag-pill.py{background:rgba(255,212,59,.12);color:#ffd43b;border:1px solid rgba(255,212,59,.28)}
+.tag-pill.rb{background:rgba(204,52,45,.12);color:#ff7a70;border:1px solid rgba(204,52,45,.32)}
+.tag-pill.php{background:rgba(119,123,179,.14);color:#a6acf0;border:1px solid rgba(119,123,179,.32)}
+.tag-pill.npm{background:rgba(203,56,55,.12);color:#ff8585;border:1px solid rgba(203,56,55,.3)}
+.tag-pill.cli{background:rgba(67,209,124,.12);color:var(--ok);border:1px solid rgba(67,209,124,.3)}
+.tag-pill.http{background:rgba(90,169,230,.12);color:#8ac6ff;border:1px solid rgba(90,169,230,.32)}
+
+/* Library row */
+.lib-row{
+  display:flex;align-items:flex-start;gap:11px;padding:11px 12px;
+  border-radius:11px;background:rgba(10,10,16,.5);
+  border:1px solid var(--border);transition:.18s;
+}
+.lib-row:hover{border-color:rgba(212,148,58,.5);background:rgba(212,148,58,.05)}
+.lib-row .lib-icon{
+  width:34px;height:34px;border-radius:9px;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--gold-l);
+  background:linear-gradient(135deg,rgba(240,185,96,.16),rgba(212,148,58,.06));
+  border:1px solid rgba(212,148,58,.3);
+}
+.lib-row .lib-body{flex:1;min-width:0}
+.lib-row .lib-name{font-size:13px;font-weight:800;color:var(--text);
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lib-row .lib-desc{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:3px}
+
+/* API Endpoint */
+.endpoint-box{
+  background:rgba(10,10,16,.55);border:1px solid var(--border);
+  border-radius:12px;padding:12px;position:relative;z-index:3;
+}
+.endpoint-line{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:7px 9px;background:#0a0a11;border:1px solid var(--border-2);
+  border-radius:8px;margin-bottom:6px;font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;word-break:break-all;
+}
+.method-badge{
+  display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;
+  font-size:10px;font-weight:800;letter-spacing:.08em;flex:none;
+}
+.method-badge.post{background:rgba(67,209,124,.15);color:#5ee9a1;border:1px solid rgba(67,209,124,.35)}
+.method-badge.get{background:rgba(90,169,230,.15);color:#8ac6ff;border:1px solid rgba(90,169,230,.35)}
+
+.endpoint-key{
+  font-size:10.5px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.1em;font-weight:700;margin-bottom:3px;
+}
+
+/* Tab bar */
+.tabbar{
+  display:flex;gap:4px;padding:4px;border-radius:10px;
+  background:rgba(10,10,16,.6);border:1px solid var(--border);
+  margin-bottom:12px;position:relative;z-index:3;
+  overflow-x:auto;
+}
+.tabbar button{
+  flex:1;padding:8px 12px;border-radius:7px;border:none;
+  background:transparent;color:var(--muted);cursor:pointer;
+  font-family:inherit;font-size:12px;font-weight:700;transition:.2s;
+  white-space:nowrap;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+}
+.tabbar button:hover{color:var(--text)}
+.tabbar button.on{
+  background:linear-gradient(135deg,var(--gold-l),var(--gold));
+  color:#0a0a0f;box-shadow:0 4px 14px rgba(212,148,58,.35);
+}
+.tabbar button.on.blue{
+  background:linear-gradient(135deg,#5aa9e6,#2b6fa3);
+  color:#fff;box-shadow:0 4px 14px rgba(90,169,230,.35);
+}
+
+/* API tester */
+.api-tester{
+  border:1px solid rgba(90,169,230,.3);
+  background:linear-gradient(180deg,rgba(90,169,230,.06),rgba(10,10,16,.6));
+  border-radius:12px;padding:14px;position:relative;z-index:3;
+}
+.api-tester h4{
+  margin:0 0 4px;font-size:14px;font-weight:800;
+  display:flex;align-items:center;gap:8px;
+}
+.api-tester .sub{font-size:11.5px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+
+.api-result{
+  margin-top:12px;border-radius:10px;overflow:hidden;
+  border:1px solid var(--border-2);background:#0a0a11;
+}
+.api-result img,.api-result video{
+  width:100%;display:block;background:#000;
+}
+.api-result .api-meta{
+  padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10.5px;
+  color:var(--muted);border-top:1px solid var(--border-2);
+  display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+}
+.api-result .api-meta b{color:var(--text)}
 
 /* ============================================================
    FOOTER / LAYOUT
@@ -532,12 +649,6 @@ video.preview{
 }
 .footer a{color:var(--gold);text-decoration:none}
 
-.center-wrap{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  padding:0 16px 32px 16px;
-}
-
-/* Grid */
 .img-grid{display:grid;grid-template-columns:1fr;gap:14px}
 @media(min-width:760px){.img-grid{grid-template-columns:1fr 1fr}}
 @media(min-width:1180px){.img-grid{grid-template-columns:1fr 1fr 1fr}}
@@ -548,40 +659,139 @@ video.preview{
   .resize-card{padding:12px}
   .topbar{padding:9px 12px}
 }
+
+/* ============================================================
+   BOOT SCREEN
+   ============================================================ */
+#boot{
+  display:flex;align-items:center;justify-content:center;flex:1;
+  min-height:70vh;padding:24px;text-align:center;
+}
+#boot .box{max-width:560px;width:100%}
+#boot .spin{
+  width:42px;height:42px;margin:0 auto 18px;border-radius:50%;
+  border:3px solid rgba(212,148,58,.18);border-top-color:var(--gold-l);
+  animation:spin .8s linear infinite;
+}
+#boot h2{margin:0 0 8px;font-size:18px}
+#boot p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+#boot code{
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;
+  background:#0e0e15;border:1px solid var(--border-2);border-radius:6px;
+  padding:2px 6px;color:var(--gold-l);
+}
+#boot .boot-status{
+  display:inline-flex;align-items:center;gap:8px;margin-top:14px;
+  font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+  flex-wrap:wrap;justify-content:center;
+}
+#boot .boot-status .dot{
+  width:7px;height:7px;border-radius:50%;background:var(--gold-l);
+  animation:bootDot 1.2s ease-in-out infinite;
+}
+#boot .boot-status .dot.ok{background:var(--ok);animation:none}
+#boot .boot-status .dot.err{background:var(--danger);animation:none}
+@keyframes bootDot{0%,100%{opacity:.3}50%{opacity:1}}
+#boot .boot-retry{
+  display:inline-flex;align-items:center;gap:8px;margin-top:16px;
+  padding:9px 16px;border-radius:8px;cursor:pointer;
+  background:linear-gradient(135deg,var(--gold-l),var(--gold));
+  color:#0a0a0f;font-weight:700;font-family:inherit;font-size:13px;
+  border:none;
+}
+
+/* Protection toast */
+.prot-toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);
+  display:flex;align-items:center;gap:10px;
+  max-width:min(92vw,470px);padding:12px 18px;border-radius:999px;
+  background:rgba(17,19,26,.95);color:#fff;
+  font:600 13.5px/1.35 'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  border:1px solid rgba(212,148,58,.45);
+  box-shadow:0 14px 38px rgba(0,0,0,.45);
+  opacity:0;pointer-events:none;z-index:2147483000;
+  transition:opacity .25s ease,transform .25s ease;
+}
+.prot-toast.show{opacity:1;transform:translate(-50%,0)}
+.prot-toast i{color:var(--gold-l);font-size:15px;line-height:1}
+@media print{.prot-toast{display:none !important}}
 </style>
 </head>
 <body>
 
-<!-- Galaxy background -->
 <canvas id="galaxyCanvas"></canvas>
 <div class="nebula nebula-1"></div>
 <div class="nebula nebula-2"></div>
 <div class="nebula nebula-3"></div>
 
-<div id="root"></div>
+<div id="root">
+  <div id="boot">
+    <div class="box">
+      <div class="spin"></div>
+      <h2>Loading HEX…</h2>
+      <p>Fetching React, Babel and the ONNX runtime.</p>
+      <div class="boot-status" id="boot-status">
+        <span class="dot" id="boot-dot-react"></span> <span>React</span>
+        <span class="dot" id="boot-dot-reactdom"></span> <span>ReactDOM</span>
+        <span class="dot" id="boot-dot-babel"></span> <span>Babel</span>
+      </div>
+      <div id="boot-msg" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>
+    </div>
+  </div>
+</div>
 
-<!-- Load ONNX Runtime Web -->
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+<!-- ============================================================
+     ONNX Runtime Web (multi-CDN fallback)
+     ============================================================ -->
+<script>
+(function () {
+  var urls = [
+    'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js',
+    'https://unpkg.com/onnxruntime-web@1.20.1/dist/ort.min.js'
+  ];
+  var i = 0;
+  function attempt() {
+    if (i >= urls.length) { console.warn('[HEX] ONNX Runtime failed to load'); return; }
+    var s = document.createElement('script');
+    s.src = urls[i++];
+    s.onload = function () { window.__ortReady = true; };
+    s.onerror = attempt;
+    document.head.appendChild(s);
+  }
+  attempt();
+})();
+</script>
 
-<!-- Load @imgly/background-removal for ISNet -->
+<!-- ============================================================
+     @imgly/background-removal (ESM, multi-CDN fallback)
+     ============================================================ -->
 <script type="module">
   (async () => {
-    try {
-      const mod = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm');
-      window.__imglyRemoveBackground = mod.removeBackground;
-      window.__imglyReady = true;
-      window.dispatchEvent(new Event('imgly-ready'));
-    } catch (err) {
-      console.error('imgly load failed', err);
-      window.__imglyError = err && err.message ? err.message : 'Failed to load @imgly';
-      window.dispatchEvent(new Event('imgly-error'));
+    const modURLs = [
+      'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm',
+      'https://esm.sh/@imgly/background-removal@1.5.5'
+    ];
+    for (const url of modURLs) {
+      try {
+        const mod = await import(url);
+        if (mod && typeof mod.removeBackground === 'function') {
+          window.__imglyRemoveBackground = mod.removeBackground;
+          window.__imglyReady = true;
+          window.dispatchEvent(new Event('imgly-ready'));
+          return;
+        }
+      } catch (err) {
+        console.warn('[HEX] @imgly failed from', url, err && err.message);
+      }
     }
+    window.__imglyError = 'All @imgly CDNs failed';
+    window.dispatchEvent(new Event('imgly-error'));
   })();
 </script>
 
-<!-- Vanilla galaxy canvas (stars + shooting stars) -->
+<!-- Galaxy canvas -->
 <script>
-(function() {
+(function () {
   const canvas = document.getElementById('galaxyCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -623,30 +833,24 @@ video.preview{
 
   function drawGalaxy() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     for (const s of stars) {
       s.phase += s.tw;
       const alpha = 0.35 + Math.abs(Math.sin(s.phase)) * 0.6;
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      if (s.sat > 0) {
-        ctx.fillStyle = `hsla(${s.hue}, ${s.sat}%, 75%, ${alpha})`;
-      } else {
-        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-      }
+      if (s.sat > 0) ctx.fillStyle = 'hsla(' + s.hue + ', ' + s.sat + '%, 75%, ' + alpha + ')';
+      else ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
       ctx.fill();
     }
-
     for (let i = shootingStars.length - 1; i >= 0; i--) {
       const sh = shootingStars[i];
       sh.x += Math.cos(sh.angle) * sh.speed;
       sh.y += Math.sin(sh.angle) * sh.speed;
       sh.life -= 0.012;
-
       const tailX = sh.x - Math.cos(sh.angle) * sh.len;
       const tailY = sh.y - Math.sin(sh.angle) * sh.len;
       const grad = ctx.createLinearGradient(sh.x, sh.y, tailX, tailY);
-      grad.addColorStop(0, `rgba(255,230,180,${Math.max(0, sh.life)})`);
+      grad.addColorStop(0, 'rgba(255,230,180,' + Math.max(0, sh.life) + ')');
       grad.addColorStop(1, 'rgba(255,230,180,0)');
       ctx.strokeStyle = grad;
       ctx.lineWidth = 2;
@@ -654,12 +858,10 @@ video.preview{
       ctx.moveTo(sh.x, sh.y);
       ctx.lineTo(tailX, tailY);
       ctx.stroke();
-
       if (sh.life <= 0 || sh.x > canvas.width + 100 || sh.y > canvas.height + 100) {
         shootingStars.splice(i, 1);
       }
     }
-
     if (Math.random() < 0.004) spawnShootingStar();
     requestAnimationFrame(drawGalaxy);
   }
@@ -670,165 +872,271 @@ video.preview{
 })();
 </script>
 
-<script type="text/babel" data-presets="react">
+<!-- ============================================================
+     APP SOURCE (JSX) — compiled manually by the loader below
+     ============================================================ -->
+<script type="text/jsx" id="hex-app-source">
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 /* ============================================================
-   MODEL REGISTRY
+   MODEL REGISTRY (local engines)
    ============================================================ */
 const MODEL_REGISTRY = {
   'isnet-fast': {
-    engine: 'imgly',
-    imglyModel: 'isnet_quint8',
-    displayName: 'ISNet · Fast',
-    tagline: 'ISNet int8 · smallest, quickest',
-    sizeLabel: '~11 MB',
-    tag: 'browser',
+    engine: 'imgly', imglyModel: 'isnet_quint8',
+    displayName: 'ISNet · Fast', tagline: 'ISNet int8 · smallest, quickest',
+    sizeLabel: '~11 MB', tag: 'browser',
   },
   'isnet-balanced': {
-    engine: 'imgly',
-    imglyModel: 'isnet_fp16',
-    displayName: 'ISNet · Balanced',
-    tagline: 'ISNet fp16 · default',
-    sizeLabel: '~22 MB',
-    tag: 'browser',
+    engine: 'imgly', imglyModel: 'isnet_fp16',
+    displayName: 'ISNet · Balanced', tagline: 'ISNet fp16 · default',
+    sizeLabel: '~22 MB', tag: 'browser',
   },
   'isnet-high': {
-    engine: 'imgly',
-    imglyModel: 'isnet',
-    displayName: 'ISNet · High',
-    tagline: 'ISNet fp32 · best edges',
-    sizeLabel: '~44 MB',
-    tag: 'browser',
+    engine: 'imgly', imglyModel: 'isnet',
+    displayName: 'ISNet · High', tagline: 'ISNet fp32 · best edges',
+    sizeLabel: '~44 MB', tag: 'browser',
   },
   'rmbg14-quant': {
     engine: 'ort',
     url: 'https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model_quantized.onnx',
-    displayName: 'RMBG-1.4 · Quantized',
-    tagline: 'Bria RMBG-1.4 int8 · small download',
-    sizeLabel: '~44 MB',
-    inputSize: 1024,
-    mean: [0.5, 0.5, 0.5],
-    std: [1.0, 1.0, 1.0],
-    applySigmoid: true,
-    tag: 'browser',
-    isNew: true,
+    displayName: 'RMBG-1.4 · Quantized', tagline: 'Bria RMBG-1.4 int8 · small download',
+    sizeLabel: '~44 MB', inputSize: 1024,
+    mean: [0.5, 0.5, 0.5], std: [1.0, 1.0, 1.0],
+    applySigmoid: true, tag: 'browser', isNew: true,
   },
   'rmbg14-fp16': {
     engine: 'ort',
     url: 'https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model_fp16.onnx',
-    displayName: 'RMBG-1.4 · FP16',
-    tagline: 'Bria RMBG-1.4 half precision',
-    sizeLabel: '~88 MB',
-    inputSize: 1024,
-    mean: [0.5, 0.5, 0.5],
-    std: [1.0, 1.0, 1.0],
-    applySigmoid: true,
-    tag: 'browser',
-    isNew: true,
+    displayName: 'RMBG-1.4 · FP16', tagline: 'Bria RMBG-1.4 half precision',
+    sizeLabel: '~88 MB', inputSize: 1024,
+    mean: [0.5, 0.5, 0.5], std: [1.0, 1.0, 1.0],
+    applySigmoid: true, tag: 'browser', isNew: true,
   },
   'rmbg14-full': {
     engine: 'ort',
     url: 'https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model.onnx',
-    displayName: 'RMBG-1.4 · Full',
-    tagline: 'Bria RMBG-1.4 full precision · sharpest',
-    sizeLabel: '~176 MB',
-    inputSize: 1024,
-    mean: [0.5, 0.5, 0.5],
-    std: [1.0, 1.0, 1.0],
-    applySigmoid: true,
-    tag: 'browser',
-    isNew: true,
+    displayName: 'RMBG-1.4 · Full', tagline: 'Bria RMBG-1.4 full precision · sharpest',
+    sizeLabel: '~176 MB', inputSize: 1024,
+    mean: [0.5, 0.5, 0.5], std: [1.0, 1.0, 1.0],
+    applySigmoid: true, tag: 'browser', isNew: true,
   },
   'modnet-quant': {
     engine: 'ort',
     url: 'https://huggingface.co/Xenova/modnet/resolve/main/onnx/model_quantized.onnx',
-    displayName: 'MODNet · Quantized',
-    tagline: 'Portrait matting · tiny',
-    sizeLabel: '~7 MB',
-    inputSize: 512,
-    mean: [0.5, 0.5, 0.5],
-    std: [0.5, 0.5, 0.5],
-    applySigmoid: false,
-    tag: 'browser',
-    isNew: true,
+    displayName: 'MODNet · Quantized', tagline: 'Portrait matting · tiny',
+    sizeLabel: '~7 MB', inputSize: 512,
+    mean: [0.5, 0.5, 0.5], std: [0.5, 0.5, 0.5],
+    applySigmoid: false, tag: 'browser', isNew: true,
   },
 };
 
-const SERVER_MODELS = [
-  {
-    id: 'bria-rmbg14',
-    name: 'Bria RMBG-1.4',
-    repo: 'https://huggingface.co/briaai/RMBG-1.4',
-    desc: 'Also available in-browser above. Use this Python path for batch jobs & maximum fidelity.',
-    icon: 'fa-robot',
-    snippet:
-`# pip install torch transformers pillow
-from transformers import AutoModelForImageSegmentation
-from torchvision import transforms
-from PIL import Image
-import torch
-
-model = AutoModelForImageSegmentation.from_pretrained(
-    "briaai/RMBG-1.4", trust_remote_code=True
-).eval()
-
-pre = transforms.Compose([
-    transforms.Resize((1024, 1024)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.5]*3, [1.0]*3),
-])
-
-img = Image.open("input.jpg").convert("RGB")
-tensor = pre(img).unsqueeze(0)
-with torch.no_grad():
-    mask = model(tensor)[-1].sigmoid().cpu()[0].squeeze()
-mask = transforms.ToPILImage()(mask).resize(img.size)
-
-out = img.copy()
-out.putalpha(mask)
-out.save("out.png")`,
+/* ============================================================
+   CLOUD API REGISTRY — remove.bg & Leonardo.Ai
+   ============================================================ */
+const CLOUD_APIS = {
+  removebg: {
+    id: 'removebg',
+    name: 'remove.bg',
+    tagline: '1 API call · auto background removal',
+    icon: 'fa-image',
+    accent: 'gold',
+    method: 'POST',
+    url: 'https://api.remove.bg/v1.0/removebg',
+    authHeader: 'X-Api-Key',
+    authTemplate: '<YOUR_API_KEY>',
+    contentType: 'multipart/form-data',
+    docsUrl: 'https://www.remove.bg/api',
+    signupUrl: 'https://www.remove.bg/api#register',
+    signupLabel: 'Get a free API key (50 calls / mo)',
+    notes: 'Send an image_file (or image_url). Response is a binary PNG by default. ' +
+           'Max 12 MB / 25 MP input. CORS is enabled for browsers, so you can call it directly from this page.',
+    curl:
+`curl -H 'X-Api-Key: YOUR_API_KEY' \\
+  -F 'image_file=@/path/to/photo.jpg' \\
+  -F 'size=auto' \\
+  -F 'format=png' \\
+  -f https://api.remove.bg/v1.0/removebg \\
+  -o out.png`,
+    fields: [
+      { key: 'size',   label: 'Size',   type: 'select',
+        options: ['auto','preview','small','regular','medium','hd','full','4k'], def: 'auto' },
+      { key: 'type',   label: 'Foreground type', type: 'select',
+        options: ['auto','person','product','animal','car','car_interior','car_part',
+                  'transportation','graphics','other'], def: 'auto' },
+      { key: 'format', label: 'Format', type: 'select',
+        options: ['png','jpg','zip','auto'], def: 'png' },
+      { key: 'channels', label: 'Channels', type: 'select',
+        options: ['rgba','alpha'], def: 'rgba' },
+      { key: 'bg_color', label: 'Background color', type: 'text',
+        placeholder: 'e.g. 81d4fa or green', def: '' },
+      { key: 'crop',    label: 'Crop margin', type: 'text',
+        placeholder: 'e.g. 10% or 50px', def: '' },
+      { key: 'add_shadow', label: 'Add shadow', type: 'checkbox', def: false },
+      { key: 'semitransparency', label: 'Semitransparency', type: 'checkbox', def: false },
+    ],
   },
+  leonardo: {
+    id: 'leonardo',
+    name: 'Leonardo.Ai',
+    tagline: 'Remove Background model · JSON API',
+    icon: 'fa-bolt',
+    accent: 'blue',
+    method: 'POST',
+    url: 'https://cloud.leonardo.ai/api/rest/v2/generationssync',
+    authHeader: 'Authorization',
+    authTemplate: 'Bearer <LEONARDO_API_KEY>',
+    contentType: 'application/json',
+    docsUrl: 'https://docs.leonardo.ai/reference/generationsync',
+    signupUrl: 'https://app.leonardo.ai/api-access',
+    signupLabel: 'Get a Leonardo API key',
+    notes: 'Explicit model selection — set "model": "remove-bg". ' +
+           'The parameter name for the source image is usually "image". ' +
+           'Check the live docs because payloads evolve; the field names below reflect the v2 schema.',
+    curl:
+`curl -X POST 'https://cloud.leonardo.ai/api/rest/v2/generationssync' \\
+  -H 'Authorization: Bearer LEONARDO_API_KEY' \\
+  -H 'Content-Type: application/json' \\
+  -H 'accept: application/json' \\
+  -d '{
+    "model": "remove-bg",
+    "parameters": {
+      "image": "<BASE64_DATA_URI_OR_PUBLIC_URL>"
+    }
+  }'`,
+    fields: [
+      { key: 'model', label: 'Model', type: 'text', def: 'remove-bg', readonly: true },
+      { key: 'prompt', label: 'Prompt (optional)', type: 'text',
+        placeholder: 'leave blank for remove-bg', def: '' },
+    ],
+  },
+};
+
+/* ============================================================
+   LIBRARIES REGISTRY — official & third-party clients
+   ============================================================ */
+const LIBRARIES = [
   {
-    id: 'rembg',
-    name: 'Rembg',
-    repo: 'https://github.com/danielgatis/rembg',
-    desc: 'Python library wrapping U2Net / ISNet / BiRefNet ONNX models. Runs fully offline. Also offers a CLI and HTTP server.',
+    id: 'removebg-cli',
+    name: 'remove-bg-cli',
+    tag: 'cli',
+    tagLabel: 'CLI',
     icon: 'fa-terminal',
-    snippet:
-`# pip install rembg[cli]
-# Save transparent PNG (uses U2Net by default)
-rembg i input.jpg out.png
+    repo: 'https://github.com/remove-bg/remove-bg-cli',
+    official: true,
+    desc: 'Official command-line interface. Batch-process folders, Homebrew/Windows/Mac/Linux builds, zip2png helper.',
+    install:
+`# Homebrew
+brew install remove-bg/homebrew-tap/removebg
 
-# Pick a specific ONNX model
-rembg i -m isnet-general-use input.jpg out.png
+# or download the release binary and put it on your PATH`,
+    usage:
+`# API key via env
+export REMOVE_BG_API_KEY=xyz
 
-# HTTP server on :7000
-rembg s
+# Process a folder in place
+removebg images/*.{png,jpg}
 
-# Batch process a folder
-rembg p ./in ./out`,
+# Different output dir, JPG with grey background
+removebg subject.jpg --format jpg --bg-color 7a7a7a \\
+  --output-directory processed`,
   },
   {
-    id: 'withoutbg',
-    name: 'withoutBG',
-    repo: 'https://github.com/withoutbg/withoutbg-python',
-    desc: 'Python SDK — open weights run offline via ONNX (~455 MB first download). Same API switches to their Cloud API for higher quality.',
-    icon: 'fa-cube',
-    snippet:
-`# uv add withoutbg   (or: pip install withoutbg)
+    id: 'removebg-python',
+    name: 'remove-bg (Python)',
+    tag: 'py',
+    tagLabel: 'PYTHON',
+    icon: 'fa-python',
+    repo: 'https://github.com/brilam/remove-bg',
+    official: false,
+    desc: 'Unofficial Python wrapper. Accepts file, URL, or base64 input. Full API parameter coverage.',
+    install: 'pip install removebg',
+    usage:
+`from removebg import RemoveBg
 
-from withoutbg import WithoutBG
+rmbg = RemoveBg("YOUR-API-KEY", "error.log", timeout=15)
+rmbg.remove_background_from_img_file("photo.jpg")
 
-# Local — free, private, offline
-model = WithoutBG.open_weights()
-result = model.remove_background("photo.jpg")
-result.save("out.png")   # keeps transparency
+# From URL
+rmbg.remove_background_from_img_url("https://example.com/cat.jpg")
 
-# Batch (load once, reuse)
-model.remove_background_batch(
-    ["a.jpg", "b.jpg"], output_dir="results/"
-)`,
+# From base64
+import base64
+b64 = base64.b64encode(open("photo.jpg", "rb").read())
+rmbg.remove_background_from_base64_img(b64)`,
+  },
+  {
+    id: 'removebg-ruby',
+    name: 'remove-bg (Ruby)',
+    tag: 'rb',
+    tagLabel: 'RUBY',
+    icon: 'fa-gem',
+    repo: 'https://github.com/remove-bg/ruby',
+    official: true,
+    desc: 'Official Ruby gem maintained by remove.bg. Works with files, URLs and base64.',
+    install: 'gem install remove_bg',
+    usage:
+`require "remove_bg"
+
+# From file
+RemoveBg.from_file("photo.jpg",
+  api_key: ENV.fetch("REMOVE_BG_API_KEY"))
+
+# From URL
+RemoveBg.from_url("https://example.com/cat.jpg",
+  api_key: ENV.fetch("REMOVE_BG_API_KEY"))
+
+# With options
+RemoveBg.from_file("photo.jpg",
+  api_key: ENV.fetch("REMOVE_BG_API_KEY"),
+  size: "4k", type: "product")`,
+  },
+  {
+    id: 'removebg-php',
+    name: 'remove-bg (PHP)',
+    tag: 'php',
+    tagLabel: 'PHP',
+    icon: 'fa-php',
+    repo: 'https://github.com/mtownsend5512/remove-bg',
+    official: false,
+    desc: 'PHP wrapper with optional Laravel service provider + facade. URL, file & base64 input, account check.',
+    install: 'composer require mtownsend/remove-bg',
+    usage:
+`use Mtownsend\\RemoveBg\\RemoveBg;
+
+$removebg = new RemoveBg($apiKey);
+
+// Save transparent PNG
+$removebg->file("photo.jpg")->save("out.png");
+$removebg->url($absoluteUrl)->save("out.png");
+$removebg->base64($b64)->save("out.png");
+
+// Advanced body
+$removebg->file("photo.jpg")
+  ->body([
+    "size" => "4k",
+    "bg_color" => "#CBD5E0",
+    "add_shadow" => true,
+    "channels" => "rgba",
+  ])
+  ->save("out.png");`,
+  },
+  {
+    id: 'removd',
+    name: 'removd',
+    tag: 'npm',
+    tagLabel: 'NPM',
+    icon: 'fa-npm',
+    repo: 'https://www.npmjs.com/package/removd',
+    official: false,
+    desc: 'Node.js client for remove.bg. Note: the npm page returns HTTP 403 to automated scrapers — open it directly in your browser.',
+    install: 'npm install removd',
+    usage:
+`const removd = require("removd");
+
+// See the README on npm for the current API surface —
+// it exposes helpers for file / URL / base64 input.
+// The upstream package wraps remove.bg's v1.0 endpoint.`,
   },
 ];
 
@@ -841,7 +1149,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 const loadImage = (src) => new Promise((res, rej) => {
   const i = new Image();
-  i.crossOrigin = 'anonymous';
+  if (!/^(blob:|data:)/i.test(src)) i.crossOrigin = 'anonymous';
   i.onload = () => res(i);
   i.onerror = () => rej(new Error('Cannot load image'));
   i.src = src;
@@ -857,10 +1165,20 @@ const saveBlob = (blob, name) => {
 
 const loadScript = (src) => new Promise((res, rej) => {
   const s = document.createElement('script');
-  s.src = src;
-  s.onload = res;
+  s.src = src; s.onload = res;
   s.onerror = () => rej(new Error('Failed to load ' + src));
   document.head.appendChild(s);
+});
+
+const blobToBase64 = (blob) => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => {
+    const s = String(r.result || '');
+    const comma = s.indexOf(',');
+    res(comma >= 0 ? s.slice(comma + 1) : s);
+  };
+  r.onerror = () => rej(new Error('Could not read file'));
+  r.readAsDataURL(blob);
 });
 
 /* ============================================================
@@ -885,21 +1203,20 @@ async function getORTSession(url, onProgress) {
     const ort = ensureORT();
     if (onProgress) onProgress('Downloading model…', 5);
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`Model fetch failed: HTTP ${res.status}`);
+    if (!res.ok) throw new Error('Model fetch failed: HTTP ' + res.status);
     const total = parseInt(res.headers.get('content-length') || '0', 10);
     const reader = res.body && res.body.getReader ? res.body.getReader() : null;
 
     let buffer;
     if (reader && total > 0) {
-      const chunks = [];
-      let received = 0;
+      const chunks = []; let received = 0;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        chunks.push(value);
-        received += value.length;
+        chunks.push(value); received += value.length;
         const pct = Math.min(95, Math.round((received / total) * 95));
-        if (onProgress) onProgress(`Downloading model… ${(received / 1048576).toFixed(1)} / ${(total / 1048576).toFixed(1)} MB`, pct);
+        if (onProgress) onProgress('Downloading model… ' + (received / 1048576).toFixed(1) +
+          ' / ' + (total / 1048576).toFixed(1) + ' MB', pct);
       }
       const merged = new Uint8Array(received);
       let off = 0;
@@ -911,8 +1228,7 @@ async function getORTSession(url, onProgress) {
 
     if (onProgress) onProgress('Initializing runtime…', 97);
     const session = await ort.InferenceSession.create(buffer, {
-      executionProviders: ['wasm'],
-      graphOptimizationLevel: 'all',
+      executionProviders: ['wasm'], graphOptimizationLevel: 'all',
     });
     if (onProgress) onProgress('Ready', 100);
     return session;
@@ -926,11 +1242,9 @@ function preprocessImage(bitmap, size, mean, std) {
   const canvas = document.createElement('canvas');
   canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(bitmap, 0, 0, size, size);
   const data = ctx.getImageData(0, 0, size, size).data;
-
   const planeSize = size * size;
   const float32 = new Float32Array(3 * planeSize);
   for (let i = 0; i < planeSize; i++) {
@@ -946,7 +1260,6 @@ async function buildMaskedImage(bitmap, outputData, outputDims, applySigmoid) {
   if (outputDims.length === 4) { H = outputDims[2]; W = outputDims[3]; }
   else if (outputDims.length === 3) { H = outputDims[1]; W = outputDims[2]; }
   else { H = Math.round(Math.sqrt(outputData.length)); W = H; }
-
   const planeSize = H * W;
 
   let minV = Infinity, maxV = -Infinity;
@@ -966,7 +1279,7 @@ async function buildMaskedImage(bitmap, outputData, outputDims, applySigmoid) {
     let v = outputData[i];
     if (applySigmoid) v = 1 / (1 + Math.exp(-v));
     const alpha = Math.round(((v - minV) / range) * 255);
-    maskImg.data[i * 4]     = alpha;
+    maskImg.data[i * 4] = alpha;
     maskImg.data[i * 4 + 1] = alpha;
     maskImg.data[i * 4 + 2] = alpha;
     maskImg.data[i * 4 + 3] = 255;
@@ -977,8 +1290,7 @@ async function buildMaskedImage(bitmap, outputData, outputDims, applySigmoid) {
   const upscaledMask = document.createElement('canvas');
   upscaledMask.width = origW; upscaledMask.height = origH;
   const upCtx = upscaledMask.getContext('2d');
-  upCtx.imageSmoothingEnabled = true;
-  upCtx.imageSmoothingQuality = 'high';
+  upCtx.imageSmoothingEnabled = true; upCtx.imageSmoothingQuality = 'high';
   upCtx.drawImage(maskCanvas, 0, 0, origW, origH);
   const maskData = upCtx.getImageData(0, 0, origW, origH);
 
@@ -987,7 +1299,6 @@ async function buildMaskedImage(bitmap, outputData, outputDims, applySigmoid) {
   const outCtx = out.getContext('2d');
   outCtx.drawImage(bitmap, 0, 0);
   const imgData = outCtx.getImageData(0, 0, origW, origH);
-
   for (let i = 0; i < imgData.data.length; i += 4) {
     imgData.data[i + 3] = maskData.data[i];
   }
@@ -1000,47 +1311,121 @@ async function buildMaskedImage(bitmap, outputData, outputDims, applySigmoid) {
 
 async function removeBackgroundWithModel(bitmap, modelKey, onProgress) {
   const model = MODEL_REGISTRY[modelKey];
-  if (!model) throw new Error(`Unknown model: ${modelKey}`);
+  if (!model) throw new Error('Unknown model: ' + modelKey);
 
   if (model.engine === 'imgly') {
     const fn = window.__imglyRemoveBackground;
-    if (!fn) throw new Error('@imgly engine not loaded');
+    if (!fn) throw new Error('@imgly engine not loaded — pick an ONNX model instead');
     const srcCanvas = document.createElement('canvas');
     srcCanvas.width = bitmap.width; srcCanvas.height = bitmap.height;
     srcCanvas.getContext('2d').drawImage(bitmap, 0, 0);
     const srcBlob = await new Promise((r) => srcCanvas.toBlob(r, 'image/png'));
-    const resultBlob = await fn(srcBlob, {
+    return await fn(srcBlob, {
       model: model.imglyModel,
       output: { format: 'image/png' },
       progress: (key, current, total) => {
-        if (onProgress && key && typeof current === 'number' && typeof total === 'number' && total > 0) {
-          onProgress(`${key} ${Math.round((current / total) * 100)}%`, Math.round((current / total) * 100));
+        if (onProgress && key && typeof current === 'number' &&
+            typeof total === 'number' && total > 0) {
+          const pct = Math.round((current / total) * 100);
+          onProgress(key + ' ' + pct + '%', pct);
         }
       },
     });
-    return resultBlob;
   }
 
   if (model.engine === 'ort') {
     const session = await getORTSession(model.url, onProgress);
     if (onProgress) onProgress('Preparing input…', 100);
-
     const inputTensor = preprocessImage(bitmap, model.inputSize, model.mean, model.std);
     const ort = ensureORT();
-    const tensor = new ort.Tensor('float32', inputTensor, [1, 3, model.inputSize, model.inputSize]);
-
+    const tensor = new ort.Tensor('float32', inputTensor,
+      [1, 3, model.inputSize, model.inputSize]);
     const inputName = session.inputNames[0];
     const outputName = session.outputNames[0];
-
     if (onProgress) onProgress('Running inference…', 100);
     const outputs = await session.run({ [inputName]: tensor });
     const output = outputs[outputName];
-
     if (onProgress) onProgress('Compositing…', 100);
     return buildMaskedImage(bitmap, output.data, output.dims, model.applySigmoid);
   }
+  throw new Error('Unsupported engine: ' + model.engine);
+}
 
-  throw new Error(`Unsupported engine: ${model.engine}`);
+/* ============================================================
+   CLOUD API CALLERS
+   ============================================================ */
+async function callRemoveBg(apiKey, fileOrBlob, opts) {
+  if (!apiKey) throw new Error('API key required');
+  const o = opts || {};
+  const form = new FormData();
+  form.append('image_file', fileOrBlob, (fileOrBlob.name || 'input.png'));
+  if (o.size) form.append('size', o.size);
+  if (o.type) form.append('type', o.type);
+  if (o.format) form.append('format', o.format);
+  if (o.channels) form.append('channels', o.channels);
+  if (o.bg_color) form.append('bg_color', o.bg_color);
+  if (o.crop) form.append('crop', o.crop);
+  if (o.add_shadow) form.append('add_shadow', 'true');
+  if (o.semitransparency) form.append('semitransparency', 'true');
+
+  const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+    method: 'POST',
+    headers: { 'X-Api-Key': apiKey },
+    body: form,
+  });
+
+  if (!res.ok) {
+    let errText = '';
+    try { errText = await res.text(); } catch (_) {}
+    let friendly = errText.slice(0, 220);
+    try {
+      const j = JSON.parse(errText);
+      if (j && j.errors && j.errors[0] && j.errors[0].title) {
+        friendly = j.errors[0].title;
+      }
+    } catch (_) {}
+    throw new Error('remove.bg ' + res.status + ' — ' + friendly);
+  }
+
+  const blob = await res.blob();
+  if (!blob || blob.size === 0) throw new Error('Empty response from remove.bg');
+  return blob;
+}
+
+async function callLeonardo(apiKey, sourceBlob, opts) {
+  if (!apiKey) throw new Error('Leonardo API key required');
+  if (!sourceBlob) throw new Error('Image required');
+
+  // Leonardo typically wants a public URL, but many endpoints accept a data URI.
+  const b64 = await blobToBase64(sourceBlob);
+  const dataUri = 'data:' + (sourceBlob.type || 'image/png') + ';base64,' + b64;
+
+  const payload = {
+    model: 'remove-bg',
+    parameters: {
+      image: dataUri,
+    },
+  };
+  if (opts && opts.prompt) payload.prompt = opts.prompt;
+
+  const res = await fetch('https://cloud.leonardo.ai/api/rest/v2/generationssync', {
+    method: 'POST',
+    headers: {
+      'Authorization': apiKey.indexOf('Bearer ') === 0 ? apiKey : ('Bearer ' + apiKey),
+      'Content-Type': 'application/json',
+      'accept': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  let json = null;
+  try { json = await res.json(); } catch (_) {}
+
+  if (!res.ok) {
+    const msg = (json && (json.error || json.message)) || ('HTTP ' + res.status);
+    throw new Error('Leonardo ' + res.status + ' — ' + msg);
+  }
+  return json;
 }
 
 /* ============================================================
@@ -1062,17 +1447,17 @@ function FXCard({ children, className = '', disableFx = false, delay = 0 }) {
       const angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
       const dist = 90 + Math.random() * 90;
       arr.push({
-        dx: `${Math.cos(angle) * dist}px`,
-        dy: `${Math.sin(angle) * dist}px`,
-        delay: `${(i * 0.025).toFixed(2)}s`,
-        dur: `${(0.7 + Math.random() * 0.5).toFixed(2)}s`,
+        dx: (Math.cos(angle) * dist).toFixed(1) + 'px',
+        dy: (Math.sin(angle) * dist).toFixed(1) + 'px',
+        delay: (i * 0.025).toFixed(2) + 's',
+        dur: (0.7 + Math.random() * 0.5).toFixed(2) + 's',
       });
     }
     return arr;
   }, []);
 
   return (
-    <div className={`resize-card ${entering ? 'entering' : ''} ${className}`}>
+    <div className={'resize-card ' + (entering ? 'entering ' : '') + className}>
       {!disableFx && (
         <>
           <div className="shoot-h" />
@@ -1080,7 +1465,8 @@ function FXCard({ children, className = '', disableFx = false, delay = 0 }) {
           <div className="card-ring" />
           <div className="burst">
             {sparks.map((s, i) => (
-              <span key={i} style={{ '--dx': s.dx, '--dy': s.dy, '--delay': s.delay, '--dur': s.dur }} />
+              <span key={i}
+                style={{ '--dx': s.dx, '--dy': s.dy, '--delay': s.delay, '--dur': s.dur }} />
             ))}
           </div>
         </>
@@ -1097,8 +1483,13 @@ function Toasts({ toasts }) {
   return (
     <div className="toast-wrap">
       {toasts.map((t) => (
-        <div key={t.id} className={`toast ${t.type}`}>
-          <i className={`fa-solid ${t.type === 'error' ? 'fa-circle-exclamation' : t.type === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`} />
+        <div key={t.id} className={'toast ' + t.type}>
+          <i className={
+            'fa-solid ' + (
+              t.type === 'error' ? 'fa-circle-exclamation'
+              : t.type === 'success' ? 'fa-circle-check'
+              : 'fa-circle-info')
+          } />
           <span>{t.msg}</span>
         </div>
       ))}
@@ -1107,19 +1498,19 @@ function Toasts({ toasts }) {
 }
 
 /* ============================================================
-   CODE SNIPPET BLOCK
+   CODE BLOCK
    ============================================================ */
-function CodeBlock({ code, showToast }) {
+function CodeBlock({ code, showToast, style }) {
   const onCopy = async () => {
     try {
       await navigator.clipboard.writeText(code);
-      if (showToast) showToast('Code copied to clipboard.', 'success');
+      if (showToast) showToast('Copied to clipboard.', 'success');
     } catch (_) {
-      if (showToast) showToast('Copy failed — select and copy manually.', 'error');
+      if (showToast) showToast('Copy failed — select manually.', 'error');
     }
   };
   return (
-    <div className="code-block">
+    <div className="code-block" style={style}>
       <button className="copy-btn" onClick={onCopy}>
         <i className="fa-solid fa-copy" /> COPY
       </button>
@@ -1139,6 +1530,7 @@ function ComparisonSlider({ before, after, bgStyle, checker }) {
   const update = useCallback((clientX) => {
     const el = ref.current; if (!el) return;
     const rect = el.getBoundingClientRect();
+    if (!rect.width) return;
     const p = ((clientX - rect.left) / rect.width) * 100;
     setPos(Math.max(0, Math.min(100, p)));
   }, []);
@@ -1156,11 +1548,11 @@ function ComparisonSlider({ before, after, bgStyle, checker }) {
       onPointerDown={onDown} onPointerMove={onMove}
       onPointerUp={onUp} onPointerCancel={onUp} onPointerLeave={onUp}>
       <img className="cmp-img" src={before} alt="Original" draggable="false" />
-      <div className={`cmp-overlay ${checker ? 'checkerboard' : ''}`}
-        style={{ ...bgStyle, clipPath: `inset(0 0 0 ${pos}%)` }}>
+      <div className={'cmp-overlay ' + (checker ? 'checkerboard' : '')}
+        style={Object.assign({}, bgStyle, { clipPath: 'inset(0 0 0 ' + pos + '%)' })}>
         <img className="cmp-img" src={after} alt="Processed" draggable="false" />
       </div>
-      <div className="cmp-handle" style={{ left: `${pos}%` }}>
+      <div className="cmp-handle" style={{ left: pos + '%' }}>
         <div className="cmp-knob"><i className="fa-solid fa-left-right" /></div>
       </div>
     </div>
@@ -1174,11 +1566,8 @@ function ImageCard({ item, index, engineStatus, engineError, onUpdate, onRemove,
   const processing = item.processing;
   const processed = item.processedUrl;
   const modelMeta = MODEL_REGISTRY[item.model] || MODEL_REGISTRY['rmbg14-quant'];
-
   const origW = item.origW, origH = item.origH;
-  const ratio = origW > 0 && origH > 0 ? origW / origH : 1;
-
-  const setModel = (m) => onUpdate(item.id, { model: m });
+  const ratio = (origW > 0 && origH > 0) ? origW / origH : 1;
 
   const runRemoveBg = useCallback(async () => {
     if (processing) return;
@@ -1227,8 +1616,11 @@ function ImageCard({ item, index, engineStatus, engineError, onUpdate, onRemove,
     if (item.transparent) return;
     if (item.useGradient) {
       const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, item.color1); g.addColorStop(1, item.color2); ctx.fillStyle = g;
-    } else ctx.fillStyle = item.color1;
+      g.addColorStop(0, item.color1); g.addColorStop(1, item.color2);
+      ctx.fillStyle = g;
+    } else {
+      ctx.fillStyle = item.color1;
+    }
     ctx.fillRect(0, 0, w, h);
   };
 
@@ -1249,8 +1641,8 @@ function ImageCard({ item, index, engineStatus, engineError, onUpdate, onRemove,
       const quality = item.format === 'webp' ? 0.92 : undefined;
       canvas.toBlob((blob) => {
         if (!blob) { showToast('Export failed.', 'error'); return; }
-        const suffix = (w !== origW || h !== origH) ? `-${w}x${h}` : '';
-        saveBlob(blob, `${baseName(item.name)}_${item.model}${suffix}.${item.format}`);
+        const suffix = (w !== origW || h !== origH) ? ('-' + w + 'x' + h) : '';
+        saveBlob(blob, baseName(item.name) + '_' + item.model + suffix + '.' + item.format);
         showToast('Downloaded.', 'success');
       }, mime, quality);
     } catch (err) { showToast('Download failed: ' + err.message, 'error'); }
@@ -1259,7 +1651,7 @@ function ImageCard({ item, index, engineStatus, engineError, onUpdate, onRemove,
   const bgStyle = item.transparent
     ? {}
     : item.useGradient
-      ? { background: `linear-gradient(135deg, ${item.color1}, ${item.color2})` }
+      ? { background: 'linear-gradient(135deg, ' + item.color1 + ', ' + item.color2 + ')' }
       : { background: item.color1 };
 
   const ready = !!processed;
@@ -1278,13 +1670,10 @@ function ImageCard({ item, index, engineStatus, engineError, onUpdate, onRemove,
         </div>
       </div>
 
-      {/* Preview */}
       {ready && !processing ? (
         <ComparisonSlider
-          before={item.url}
-          after={processed}
-          bgStyle={bgStyle}
-          checker={item.transparent}
+          before={item.url} after={processed}
+          bgStyle={bgStyle} checker={item.transparent}
         />
       ) : (
         <div className="img-loader">
@@ -1292,7 +1681,8 @@ function ImageCard({ item, index, engineStatus, engineError, onUpdate, onRemove,
           <div className="spinner-overlay">
             <div className="spinner" />
             <div className="label">
-              {processing ? (item.progressLabel || 'Processing…') : 'Ready — click Remove background'}
+              {processing ? (item.progressLabel || 'Processing…')
+                          : 'Ready — click Remove background'}
             </div>
           </div>
         </div>
@@ -1301,35 +1691,40 @@ function ImageCard({ item, index, engineStatus, engineError, onUpdate, onRemove,
       {processing && (
         <div className="progress-wrap">
           <div className="progress">
-            <div className={`progress-bar ${item.progress >= 100 ? 'indet' : ''}`}
-              style={{ width: `${Math.max(2, item.progress || 0)}%` }} />
+            <div className={'progress-bar ' + (item.progress >= 100 ? 'indet' : '')}
+              style={{ width: Math.max(2, item.progress || 0) + '%' }} />
           </div>
           <div className="progress-text">
-            {item.progressLabel} {item.progress > 0 ? `${item.progress}%` : ''}
+            {item.progressLabel} {item.progress > 0 ? (item.progress + '%') : ''}
           </div>
         </div>
       )}
 
       <div style={{ height: 12 }} />
 
-      {/* Model selector */}
       <div className="field" style={{ marginBottom: 8 }}>
         <label className="label">Model</label>
         <select className="select" value={item.model} disabled={processing}
-          onChange={(e) => setModel(e.target.value)}>
+          onChange={(e) => onUpdate(item.id, { model: e.target.value })}>
           <optgroup label="ISNet (via @imgly)">
             {Object.keys(MODEL_REGISTRY).filter(k => MODEL_REGISTRY[k].engine === 'imgly').map(k => (
-              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+              <option key={k} value={k}>
+                {MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}
+              </option>
             ))}
           </optgroup>
           <optgroup label="RMBG-1.4 (Bria) · ONNX">
-            {Object.keys(MODEL_REGISTRY).filter(k => k.startsWith('rmbg14')).map(k => (
-              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+            {Object.keys(MODEL_REGISTRY).filter(k => k.indexOf('rmbg14') === 0).map(k => (
+              <option key={k} value={k}>
+                {MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}
+              </option>
             ))}
           </optgroup>
           <optgroup label="MODNet (portrait) · ONNX">
-            {Object.keys(MODEL_REGISTRY).filter(k => k.startsWith('modnet')).map(k => (
-              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+            {Object.keys(MODEL_REGISTRY).filter(k => k.indexOf('modnet') === 0).map(k => (
+              <option key={k} value={k}>
+                {MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}
+              </option>
             ))}
           </optgroup>
         </select>
@@ -1342,7 +1737,7 @@ function ImageCard({ item, index, engineStatus, engineError, onUpdate, onRemove,
           : <><i className="fa-solid fa-wand-magic-sparkles" /> Remove background</>}
       </button>
 
-      {engineStatus === 'error' && (
+      {engineStatus === 'error' && item.model.indexOf('isnet') === 0 && (
         <div className="warn-banner err" style={{ marginTop: 10, marginBottom: 0 }}>
           <i className="fa-solid fa-triangle-exclamation" />
           <div><b>Engine warning.</b> {engineError || 'Some models may not load.'}</div>
@@ -1351,7 +1746,6 @@ function ImageCard({ item, index, engineStatus, engineError, onUpdate, onRemove,
 
       <div className="divider" />
 
-      {/* Export controls */}
       <div className="row2">
         <div className="field">
           <label className="label">Width</label>
@@ -1431,15 +1825,13 @@ async function extractAndProcessFrames(videoFile, modelKey, onProgress) {
     video.onloadedmetadata = res;
     video.onerror = () => rej(new Error('Cannot decode video'));
   });
-
   const duration = Math.min(video.duration || MAX_VIDEO_DURATION, MAX_VIDEO_DURATION);
   const frameCount = Math.max(2, Math.floor(duration * VIDEO_FPS));
-  const w = video.videoWidth || 640; const h = video.videoHeight || 360;
-
+  const w = video.videoWidth || 640;
+  const h = video.videoHeight || 360;
   const canvas = document.createElement('canvas');
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
-
   const frames = [];
   for (let i = 0; i < frameCount; i++) {
     video.currentTime = i / VIDEO_FPS;
@@ -1449,19 +1841,26 @@ async function extractAndProcessFrames(videoFile, modelKey, onProgress) {
     const processedBlob = await removeBackgroundWithModel(bitmap, modelKey, null);
     if (bitmap.close) bitmap.close();
     frames.push({ blob: processedBlob });
-    if (onProgress) onProgress(Math.round(((i + 1) / frameCount) * 70), `Frame ${i + 1} / ${frameCount}`);
+    if (onProgress) onProgress(Math.round(((i + 1) / frameCount) * 70),
+      'Frame ' + (i + 1) + ' / ' + frameCount);
   }
   URL.revokeObjectURL(video.src);
   return { frames, w, h };
 }
 
 async function encodeFramesToWebM(frames, w, h, onProgress) {
+  if (typeof MediaRecorder === 'undefined') {
+    throw new Error('MediaRecorder unsupported — choose GIF instead');
+  }
   const outCanvas = document.createElement('canvas');
   outCanvas.width = w; outCanvas.height = h;
   const outCtx = outCanvas.getContext('2d');
   const stream = outCanvas.captureStream(VIDEO_FPS);
-  const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
-  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4_000_000 });
+  let mime = 'video/webm';
+  if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+    mime = 'video/webm;codecs=vp9';
+  }
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4000000 });
   const chunks = [];
   rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
   rec.start(100);
@@ -1481,6 +1880,7 @@ async function encodeFramesToWebM(frames, w, h, onProgress) {
 
 const GIFJS_URL = 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js';
 const GIFJS_WORKER = 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js';
+
 async function encodeFramesToGif(frames, w, h, onProgress) {
   if (!window.GIF) await loadScript(GIFJS_URL);
   const workerCode = await (await fetch(GIFJS_WORKER)).text();
@@ -1518,15 +1918,19 @@ function VideoCard({ item, index, onUpdate, onRemove, showToast }) {
 
   const runVideo = async () => {
     if (processing) return;
-    onUpdate(item.id, { processing: true, progress: 0, progressLabel: 'Decoding video…', processedUrl: null });
+    onUpdate(item.id, {
+      processing: true, progress: 0, progressLabel: 'Decoding video…', processedUrl: null
+    });
     try {
       const result = await extractAndProcessFrames(item.file, item.model, (p, label) => {
         onUpdate(item.id, { progress: p, progressLabel: label });
       });
       onUpdate(item.id, { progressLabel: 'Encoding video…' });
       const out = item.format === 'gif'
-        ? await encodeFramesToGif(result.frames, result.w, result.h, (p) => onUpdate(item.id, { progress: p }))
-        : await encodeFramesToWebM(result.frames, result.w, result.h, (p) => onUpdate(item.id, { progress: p }));
+        ? await encodeFramesToGif(result.frames, result.w, result.h,
+            (p) => onUpdate(item.id, { progress: p }))
+        : await encodeFramesToWebM(result.frames, result.w, result.h,
+            (p) => onUpdate(item.id, { progress: p }));
       const url = URL.createObjectURL(out);
       onUpdate(item.id, { processedUrl: url, processing: false, progress: 100, progressLabel: 'Done' });
       showToast('Video processed.', 'success');
@@ -1541,8 +1945,8 @@ function VideoCard({ item, index, onUpdate, onRemove, showToast }) {
     if (!processed) return;
     try {
       const srcBlob = await (await fetch(processed)).blob();
-      const ext = srcBlob.type.includes('gif') ? 'gif' : 'webm';
-      saveBlob(srcBlob, `${baseName(item.name)}_${item.model}.${ext}`);
+      const ext = srcBlob.type.indexOf('gif') !== -1 ? 'gif' : 'webm';
+      saveBlob(srcBlob, baseName(item.name) + '_' + item.model + '.' + ext);
       showToast('Downloaded.', 'success');
     } catch (err) { showToast('Download failed: ' + err.message, 'error'); }
   };
@@ -1554,7 +1958,8 @@ function VideoCard({ item, index, onUpdate, onRemove, showToast }) {
       </button>
 
       <div className="filebar" style={{ paddingRight: 36 }}>
-        <div className="thumb" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="thumb"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <i className="fa-solid fa-film" style={{ color: 'var(--gold)' }} />
         </div>
         <div className="meta">
@@ -1569,11 +1974,11 @@ function VideoCard({ item, index, onUpdate, onRemove, showToast }) {
       {processing && (
         <div className="progress-wrap">
           <div className="progress">
-            <div className={`progress-bar ${item.progress >= 100 ? 'indet' : ''}`}
-              style={{ width: `${Math.max(2, item.progress || 0)}%` }} />
+            <div className={'progress-bar ' + (item.progress >= 100 ? 'indet' : '')}
+              style={{ width: Math.max(2, item.progress || 0) + '%' }} />
           </div>
           <div className="progress-text">
-            {item.progressLabel} {item.progress > 0 ? `${item.progress}%` : ''}
+            {item.progressLabel} {item.progress > 0 ? (item.progress + '%') : ''}
           </div>
         </div>
       )}
@@ -1586,17 +1991,23 @@ function VideoCard({ item, index, onUpdate, onRemove, showToast }) {
           onChange={(e) => onUpdate(item.id, { model: e.target.value })}>
           <optgroup label="ISNet (via @imgly)">
             {Object.keys(MODEL_REGISTRY).filter(k => MODEL_REGISTRY[k].engine === 'imgly').map(k => (
-              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+              <option key={k} value={k}>
+                {MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}
+              </option>
             ))}
           </optgroup>
           <optgroup label="RMBG-1.4 (Bria) · ONNX">
-            {Object.keys(MODEL_REGISTRY).filter(k => k.startsWith('rmbg14')).map(k => (
-              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+            {Object.keys(MODEL_REGISTRY).filter(k => k.indexOf('rmbg14') === 0).map(k => (
+              <option key={k} value={k}>
+                {MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}
+              </option>
             ))}
           </optgroup>
           <optgroup label="MODNet (portrait) · ONNX">
-            {Object.keys(MODEL_REGISTRY).filter(k => k.startsWith('modnet')).map(k => (
-              <option key={k} value={k}>{MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}</option>
+            {Object.keys(MODEL_REGISTRY).filter(k => k.indexOf('modnet') === 0).map(k => (
+              <option key={k} value={k}>
+                {MODEL_REGISTRY[k].displayName} — {MODEL_REGISTRY[k].sizeLabel}
+              </option>
             ))}
           </optgroup>
         </select>
@@ -1634,16 +2045,476 @@ function VideoCard({ item, index, onUpdate, onRemove, showToast }) {
 }
 
 /* ============================================================
-   SERVER-SIDE / PYTHON REFERENCE
+   CLOUD API PLAYGROUND
    ============================================================ */
+function CloudAPIPlayground({ showToast }) {
+  const [tab, setTab] = useState('removebg');
+  const api = CLOUD_APIS[tab];
+
+  const [apiKey, setApiKey] = useState('');
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [values, setValues] = useState(() => {
+    const init = {};
+    Object.keys(CLOUD_APIS).forEach((k) => {
+      init[k] = {};
+      CLOUD_APIS[k].fields.forEach((f) => { init[k][f.key] = f.def; });
+    });
+    return init;
+  });
+
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+  const [rawJSON, setRawJSON] = useState(null);
+  const [err, setErr] = useState(null);
+
+  const fileInputRef = useRef(null);
+
+  // Clean up preview URL when file changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const onFile = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (f.type.indexOf('image/') !== 0) {
+      showToast('Please pick an image file.', 'error');
+      return;
+    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setFile(f);
+    setPreviewUrl(URL.createObjectURL(f));
+    setResult(null); setRawJSON(null); setErr(null);
+  };
+
+  const setVal = (key, v) => {
+    setValues((prev) => {
+      const next = Object.assign({}, prev);
+      next[tab] = Object.assign({}, prev[tab], { [key]: v });
+      return next;
+    });
+  };
+
+  const run = async () => {
+    if (!apiKey.trim()) { showToast('Enter your ' + api.name + ' API key.', 'error'); return; }
+    if (!file) { showToast('Pick an image first.', 'error'); return; }
+
+    setBusy(true); setErr(null); setResult(null); setRawJSON(null);
+
+    try {
+      if (tab === 'removebg') {
+        const blob = await callRemoveBg(apiKey.trim(), file, values.removebg);
+        const url = URL.createObjectURL(blob);
+        setResult({ kind: 'blob', url: url, name: baseName(file.name) + '-removebg.png',
+                    size: blob.size });
+        showToast('remove.bg: success — ' + (blob.size / 1024).toFixed(1) + ' KB', 'success');
+      } else {
+        const json = await callLeonardo(apiKey.trim(), file, values.leonardo);
+        setRawJSON(json);
+
+        // Try to find an image URL inside the response
+        const url = findImageUrl(json);
+        if (url) setResult({ kind: 'url', url: url });
+        showToast('Leonardo: got a response.', 'success');
+      }
+    } catch (e) {
+      console.error(e);
+      setErr(e.message || String(e));
+      showToast(e.message || 'API call failed', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const downloadResult = async () => {
+    if (!result) return;
+    try {
+      if (result.kind === 'blob') {
+        const a = document.createElement('a');
+        a.href = result.url; a.download = result.name;
+        document.body.appendChild(a); a.click(); a.remove();
+      } else if (result.kind === 'url') {
+        const r = await fetch(result.url);
+        const blob = await r.blob();
+        saveBlob(blob, 'leonardo-removebg.png');
+      }
+    } catch (e) { showToast('Download failed: ' + e.message, 'error'); }
+  };
+
+  const accentClass = api.accent === 'blue' ? 'blue' : '';
+
+  return (
+    <FXCard>
+      <div className="card-title">
+        <i className="fa-solid fa-cloud" /> Cloud API Playground
+      </div>
+      <div className="hint" style={{ marginTop: 0, marginBottom: 12 }}>
+        Paste your own key and call remove.bg or Leonardo.Ai directly from this page.
+        Keys stay in your browser only (no server round-trip). Get a free key from each
+        provider to try it out.
+      </div>
+
+      <div className="tabbar">
+        {Object.keys(CLOUD_APIS).map((k) => {
+          const a = CLOUD_APIS[k];
+          return (
+            <button key={k}
+              className={(tab === k ? 'on ' : '') + (a.accent === 'blue' ? 'blue' : '')}
+              onClick={() => { setTab(k); setResult(null); setRawJSON(null); setErr(null); }}>
+              <i className={'fa-solid ' + a.icon} /> {a.name}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="endpoint-box" style={{ marginBottom: 12 }}>
+        <div className="endpoint-key">Endpoint</div>
+        <div className="endpoint-line">
+          <span className="method-badge post">{api.method}</span>
+          <span className="mono" style={{ color: 'var(--blue)' }}>{api.url}</span>
+        </div>
+        <div className="row2" style={{ marginTop: 8 }}>
+          <div>
+            <div className="endpoint-key">Auth header</div>
+            <div className="endpoint-line" style={{ marginBottom: 0 }}>
+              <span className="mono">{api.authHeader}:</span>
+              <span className="mono" style={{ color: 'var(--gold-l)' }}>{api.authTemplate}</span>
+            </div>
+          </div>
+          <div>
+            <div className="endpoint-key">Content-Type</div>
+            <div className="endpoint-line" style={{ marginBottom: 0 }}>
+              <span className="mono">{api.contentType}</span>
+            </div>
+          </div>
+        </div>
+        <div className="hint" style={{ marginTop: 8 }}>{api.notes}</div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+          <a className="btn-secondary" href={api.docsUrl} target="_blank" rel="noreferrer"
+            style={{ textDecoration: 'none' }}>
+            <i className="fa-solid fa-book" /> API docs
+          </a>
+          <a className="btn-secondary" href={api.signupUrl} target="_blank" rel="noreferrer"
+            style={{ textDecoration: 'none' }}>
+            <i className="fa-solid fa-key" /> {api.signupLabel || 'Get API key'}
+          </a>
+        </div>
+      </div>
+
+      <div className="api-tester">
+        <h4><i className={'fa-solid ' + api.icon} style={{ color: api.accent === 'blue' ? 'var(--blue)' : 'var(--gold-l)' }} />
+          Live tester</h4>
+        <div className="sub">{api.tagline}</div>
+
+        <div className="field">
+          <label className="label">API key</label>
+          <input className="text-input" type="password"
+            placeholder={api.authTemplate.replace(/[<>]/g, '')}
+            value={apiKey} onChange={(e) => setApiKey(e.target.value)}
+            autoComplete="off" spellCheck="false" />
+        </div>
+
+        <div className="field">
+          <label className="label">Image</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button className="btn-secondary" type="button"
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}>
+              <i className="fa-solid fa-upload" /> Choose file
+            </button>
+            <span className="hint" style={{ marginTop: 0 }}>
+              {file ? file.name + ' · ' + (file.size / 1024).toFixed(1) + ' KB'
+                    : 'No file selected'}
+            </span>
+            <input ref={fileInputRef} type="file" accept="image/*"
+              style={{ display: 'none' }} onChange={onFile} />
+          </div>
+          {previewUrl && (
+            <div style={{ marginTop: 8, borderRadius: 10, overflow: 'hidden',
+              border: '1px solid var(--border-2)', background: '#0a0a11' }}>
+              <img src={previewUrl} alt="input preview"
+                style={{ width: '100%', display: 'block', maxHeight: 220, objectFit: 'contain' }} />
+            </div>
+          )}
+        </div>
+
+        {api.fields.length > 0 && (
+          <div className="row3" style={{ marginBottom: 10 }}>
+            {api.fields.map((f) => {
+              const v = values[tab][f.key];
+              if (f.type === 'select') {
+                return (
+                  <div className="field" key={f.key} style={{ marginBottom: 0 }}>
+                    <label className="label">{f.label}</label>
+                    <select className="select" value={v}
+                      onChange={(e) => setVal(f.key, e.target.value)}>
+                      {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                );
+              }
+              if (f.type === 'checkbox') {
+                return (
+                  <label className="check" key={f.key} style={{ paddingTop: 22 }}>
+                    <input type="checkbox" checked={!!v}
+                      onChange={(e) => setVal(f.key, e.target.checked)} />
+                    {f.label}
+                  </label>
+                );
+              }
+              // text / readonly
+              return (
+                <div className="field" key={f.key} style={{ marginBottom: 0 }}>
+                  <label className="label">{f.label}</label>
+                  <input className="text-input" type="text"
+                    value={v || ''} readOnly={!!f.readonly}
+                    placeholder={f.placeholder || ''}
+                    onChange={(e) => setVal(f.key, e.target.value)} />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <button className={'btn-' + (api.accent === 'blue' ? 'blue' : 'primary')}
+          disabled={busy || !file || !apiKey.trim()} onClick={run}>
+          {busy
+            ? <><span className="mini-spinner" /> Calling {api.name}…</>
+            : <><i className="fa-solid fa-paper-plane" /> Send to {api.name}</>}
+        </button>
+
+        {err && (
+          <div className="warn-banner err" style={{ marginTop: 10, marginBottom: 0 }}>
+            <i className="fa-solid fa-circle-exclamation" />
+            <div>
+              <b>Request failed.</b><br />
+              <span className="mono" style={{ fontSize: 11 }}>{err}</span>
+              <div className="hint" style={{ marginTop: 6 }}>
+                Common causes: invalid / expired key, quota exceeded, image too large
+                (&gt;12 MB / 25 MP), or CORS blocked by an extension.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {result && result.kind === 'blob' && (
+          <div className="api-result">
+            <img src={result.url} alt="Result" />
+            <div className="api-meta">
+              <span><b>PNG</b> · {(result.size / 1024).toFixed(1)} KB</span>
+              <button className="btn-secondary" onClick={downloadResult}
+                style={{ padding: '4px 10px', fontSize: 11 }}>
+                <i className="fa-solid fa-download" /> Save
+              </button>
+            </div>
+          </div>
+        )}
+
+        {result && result.kind === 'url' && (
+          <div className="api-result">
+            <img src={result.url} alt="Result" />
+            <div className="api-meta">
+              <span className="mono" style={{ wordBreak: 'break-all' }}>
+                {result.url.slice(0, 70)}{result.url.length > 70 ? '…' : ''}
+              </span>
+              <button className="btn-secondary" onClick={downloadResult}
+                style={{ padding: '4px 10px', fontSize: 11 }}>
+                <i className="fa-solid fa-download" /> Save
+              </button>
+            </div>
+          </div>
+        )}
+
+        {rawJSON && (
+          <div style={{ marginTop: 10 }}>
+            <div className="endpoint-key">Raw JSON response</div>
+            <CodeBlock code={JSON.stringify(rawJSON, null, 2)} showToast={showToast} />
+          </div>
+        )}
+      </div>
+
+      <div className="divider" />
+      <div className="endpoint-key">Equivalent cURL</div>
+      <CodeBlock code={api.curl} showToast={showToast} />
+    </FXCard>
+  );
+}
+
+function findImageUrl(obj) {
+  if (!obj || typeof obj !== 'object') return null;
+  // Common Leonardo response shapes
+  const paths = [
+    (o) => o && o.generations_by_pk && o.generations_by_pk.generated_images &&
+           o.generations_by_pk.generated_images[0] && o.generations_by_pk.generated_images[0].url,
+    (o) => o && o.generated_images && o.generated_images[0] && o.generated_images[0].url,
+    (o) => o && o.images && o.images[0] && (o.images[0].url || o.images[0]),
+    (o) => o && o.data && o.data.url,
+    (o) => o && o.url,
+  ];
+  for (const p of paths) {
+    try {
+      const v = p(obj);
+      if (typeof v === 'string' && /^https?:\/\//.test(v)) return v;
+    } catch (_) {}
+  }
+  // Deep search fallback
+  const seen = new Set();
+  const stack = [obj];
+  while (stack.length) {
+    const cur = stack.pop();
+    if (!cur || typeof cur !== 'object' || seen.has(cur)) continue;
+    seen.add(cur);
+    for (const k of Object.keys(cur)) {
+      const v = cur[k];
+      if (typeof v === 'string' && /^https?:\/\/.+\.(png|jpe?g|webp)(\?|$)/i.test(v)) {
+        return v;
+      }
+      if (v && typeof v === 'object') stack.push(v);
+    }
+  }
+  return null;
+}
+
+/* ============================================================
+   LIBRARIES CARD
+   ============================================================ */
+function LibrariesCard({ showToast }) {
+  const [openId, setOpenId] = useState(null);
+
+  return (
+    <FXCard>
+      <div className="card-title">
+        <i className="fa-solid fa-cubes" /> Libraries &amp; SDKs
+      </div>
+      <div className="hint" style={{ marginTop: 0, marginBottom: 12 }}>
+        Official and community clients for the remove.bg API — install in seconds, then
+        drop your key in. Every library below hits the same endpoint as the playground.
+      </div>
+
+      <div className="tool-list">
+        {LIBRARIES.map((lib) => {
+          const open = openId === lib.id;
+          return (
+            <div key={lib.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div className="lib-row" style={{ cursor: 'pointer' }}
+                onClick={() => setOpenId(open ? null : lib.id)}>
+                <div className="lib-icon">
+                  <i className={'fa-' + (lib.icon.indexOf('fa-') === 0 ? 'solid ' : 'brands ') + lib.icon} />
+                </div>
+                <div className="lib-body">
+                  <div className="lib-name">
+                    {lib.name}
+                    <span className={'tag-pill ' + lib.tag}>{lib.tagLabel}</span>
+                    {lib.official && (
+                      <span className="tag-pill" style={{ background: 'rgba(212,148,58,.12)',
+                        color: 'var(--gold-l)', border: '1px solid rgba(212,148,58,.3)' }}>
+                        <i className="fa-solid fa-circle-check" /> OFFICIAL
+                      </span>
+                    )}
+                  </div>
+                  <div className="lib-desc">{lib.desc}</div>
+                </div>
+                <a href={lib.repo} target="_blank" rel="noreferrer" className="tool-open"
+                  onClick={(e) => e.stopPropagation()} title="Open repo">
+                  <i className="fa-solid fa-arrow-up-right-from-square" />
+                </a>
+              </div>
+
+              {open && (
+                <div style={{ paddingLeft: 4, paddingRight: 4, marginBottom: 6 }}>
+                  <div className="endpoint-key">Install</div>
+                  <CodeBlock code={lib.install} showToast={showToast} />
+                  <div className="endpoint-key" style={{ marginTop: 8 }}>Usage</div>
+                  <CodeBlock code={lib.usage} showToast={showToast} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hint" style={{ marginTop: 10 }}>
+        <i className="fa-solid fa-circle-info" style={{ color: 'var(--gold-l)' }} />{' '}
+        The npm page for <b>removd</b> returns HTTP 403 to scrapers — open it directly in
+        your browser. All links above point at canonical sources.
+      </div>
+    </FXCard>
+  );
+}
+
+/* ============================================================
+   SERVER-SIDE / PYTHON REFERENCE  (kept from before)
+   ============================================================ */
+const SERVER_MODELS = [
+  {
+    id: 'bria-rmbg14', name: 'Bria RMBG-1.4',
+    repo: 'https://huggingface.co/briaai/RMBG-1.4',
+    desc: 'Also available in-browser above. Use this Python path for batch jobs & maximum fidelity.',
+    icon: 'fa-robot',
+    snippet:
+`# pip install torch transformers pillow
+from transformers import AutoModelForImageSegmentation
+from torchvision import transforms
+from PIL import Image
+import torch
+
+model = AutoModelForImageSegmentation.from_pretrained(
+    "briaai/RMBG-1.4", trust_remote_code=True
+).eval()
+
+pre = transforms.Compose([
+    transforms.Resize((1024, 1024)),
+    transforms.ToTensor(),
+    transforms.Normalize([0.5]*3, [1.0]*3),
+])
+
+img = Image.open("input.jpg").convert("RGB")
+tensor = pre(img).unsqueeze(0)
+with torch.no_grad():
+    mask = model(tensor)[-1].sigmoid().cpu()[0].squeeze()
+mask = transforms.ToPILImage()(mask).resize(img.size)
+
+out = img.copy()
+out.putalpha(mask)
+out.save("out.png")`,
+  },
+  {
+    id: 'rembg', name: 'Rembg',
+    repo: 'https://github.com/danielgatis/rembg',
+    desc: 'Python library wrapping U2Net / ISNet / BiRefNet ONNX models. Runs fully offline. Also offers a CLI and HTTP server.',
+    icon: 'fa-terminal',
+    snippet:
+`# pip install rembg[cli]
+rembg i input.jpg out.png
+rembg i -m isnet-general-use input.jpg out.png
+rembg s          # HTTP server on :7000
+rembg p ./in ./out`,
+  },
+  {
+    id: 'withoutbg', name: 'withoutBG',
+    repo: 'https://github.com/withoutbg/withoutbg-python',
+    desc: 'Python SDK — open weights run offline via ONNX (~455 MB first download). Same API switches to their Cloud API for higher quality.',
+    icon: 'fa-cube',
+    snippet:
+`# uv add withoutbg   (or: pip install withoutbg)
+from withoutbg import WithoutBG
+
+model = WithoutBG.open_weights()
+result = model.remove_background("photo.jpg")
+result.save("out.png")`,
+  },
+];
+
 function ServerSideReference({ showToast }) {
   const [openId, setOpenId] = useState(null);
   return (
     <FXCard>
-      <div className="card-title"><i className="fa-solid fa-server" /> Server-side / Python</div>
+      <div className="card-title"><i className="fa-solid fa-server" /> Server-side / Local Python</div>
       <div className="hint" style={{ marginTop: 0, marginBottom: 10 }}>
-        Same model families, running on your own infrastructure — offline, private, unlimited.
-        Ideal for batch jobs, backends, or when you need the sharpest edges.
+        Same model families as the local engines, running on your own infrastructure —
+        offline, private, unlimited. Ideal for batch jobs and backends.
       </div>
       <div className="tool-list">
         {SERVER_MODELS.map((m) => {
@@ -1652,7 +2523,7 @@ function ServerSideReference({ showToast }) {
             <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div className="tool-item" style={{ cursor: 'pointer' }}
                 onClick={() => setOpenId(open ? null : m.id)}>
-                <div className="tool-icon"><i className={`fa-solid ${m.icon}`} /></div>
+                <div className="tool-icon"><i className={'fa-solid ' + m.icon} /></div>
                 <div className="tool-body">
                   <div className="tool-name">{m.name}</div>
                   <div className="tool-desc">{m.desc}</div>
@@ -1672,13 +2543,38 @@ function ServerSideReference({ showToast }) {
           );
         })}
       </div>
-      <div className="hint" style={{ marginTop: 10 }}>
-        <i className="fa-solid fa-circle-info" style={{ color: 'var(--gold)' }} />{' '}
-        Rembg and withoutBG are Python-only — the browser versions use the same underlying
-        ONNX model families (ISNet, U2Net-family, RMBG).
-      </div>
     </FXCard>
   );
+}
+
+/* ============================================================
+   ERROR BOUNDARY
+   ============================================================ */
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error: error }; }
+  componentDidCatch(error, info) { console.error('HEX crashed:', error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="container" style={{ paddingTop: 60 }}>
+          <div className="warn-banner err" style={{ maxWidth: 720, margin: '0 auto' }}>
+            <i className="fa-solid fa-triangle-exclamation" />
+            <div>
+              <b>Something went wrong.</b><br />
+              {String((this.state.error && this.state.error.message) || this.state.error)}
+              <div style={{ marginTop: 10 }}>
+                <button className="btn-secondary" onClick={() => window.location.reload()}>
+                  <i className="fa-solid fa-rotate-right" /> Reload page
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 /* ============================================================
@@ -1687,7 +2583,7 @@ function ServerSideReference({ showToast }) {
 function App() {
   const [toasts, setToasts] = useState([]);
   const [engineStatus, setEngineStatus] = useState(
-    window.__imglyReady ? 'ready' : window.__imglyError ? 'error' : 'loading'
+    window.__imglyReady ? 'ready' : (window.__imglyError ? 'error' : 'loading')
   );
   const [engineError, setEngineError] = useState(window.__imglyError || null);
   const [items, setItems] = useState([]);
@@ -1696,14 +2592,17 @@ function App() {
 
   const showToast = useCallback((msg, type = 'error') => {
     const id = Math.random().toString(36).slice(2);
-    setToasts((t) => [...t, { id, msg, type }]);
+    setToasts((t) => t.concat([{ id, msg, type }]));
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4800);
   }, []);
 
   useEffect(() => {
     if (engineStatus === 'ready') return;
-    const onReady = () => setEngineStatus('ready');
-    const onError = () => { setEngineStatus('error'); setEngineError(window.__imglyError || 'Failed to load @imgly'); };
+    const onReady = () => { setEngineStatus('ready'); setEngineError(null); };
+    const onError = () => {
+      setEngineStatus('error');
+      setEngineError(window.__imglyError || 'Failed to load @imgly');
+    };
     window.addEventListener('imgly-ready', onReady);
     window.addEventListener('imgly-error', onError);
     return () => {
@@ -1713,7 +2612,7 @@ function App() {
   }, [engineStatus]);
 
   const updateItem = useCallback((id, patch) => {
-    setItems((list) => list.map((it) => it.id === id ? { ...it, ...patch } : it));
+    setItems((list) => list.map((it) => (it.id === id ? Object.assign({}, it, patch) : it)));
   }, []);
 
   const removeItem = useCallback((id) => {
@@ -1730,12 +2629,13 @@ function App() {
   const addFiles = useCallback(async (files) => {
     const arr = Array.from(files || []);
     if (!arr.length) return;
-    const accepted = arr.filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
+    const accepted = arr.filter(f =>
+      f.type.indexOf('image/') === 0 || f.type.indexOf('video/') === 0);
     if (!accepted.length) { showToast('Unsupported files.', 'error'); return; }
 
     const newItems = [];
     for (const f of accepted) {
-      const isVideo = f.type.startsWith('video/');
+      const isVideo = f.type.indexOf('video/') === 0;
       const url = URL.createObjectURL(f);
       const id = uid();
       let w = 0, h = 0;
@@ -1745,50 +2645,41 @@ function App() {
           w = img.naturalWidth; h = img.naturalHeight;
         } catch (_) {}
       }
-      const sizeKb = (f.size / 1024).toFixed(1);
       const sizeLabel = f.size > 1048576
-        ? `${(f.size / 1048576).toFixed(2)} MB`
-        : `${sizeKb} KB`;
+        ? (f.size / 1048576).toFixed(2) + ' MB'
+        : (f.size / 1024).toFixed(1) + ' KB';
 
       newItems.push({
-        id,
-        file: f,
-        url,
+        id, file: f, url,
         name: f.name || (isVideo ? 'video' : 'image'),
         type: isVideo ? 'video' : 'image',
-        origW: w, origH: h,
-        sizeLabel,
+        origW: w, origH: h, sizeLabel,
         model: 'rmbg14-quant',
-        processedUrl: null,
-        processing: false,
-        progress: 0,
-        progressLabel: '',
-        exportW: w || 0,
-        exportH: h || 0,
+        processedUrl: null, processing: false, progress: 0, progressLabel: '',
+        exportW: w || 1024, exportH: h || 1024,
         lockAspect: true,
         format: isVideo ? 'webm' : 'png',
         transparent: true,
-        color1: '#f0b960',
-        color2: '#7850c8',
+        color1: '#f0b960', color2: '#7850c8',
         useGradient: true,
       });
     }
-    setItems((list) => [...list, ...newItems]);
-    showToast(`${newItems.length} file${newItems.length > 1 ? 's' : ''} added.`, 'success');
+    setItems((list) => list.concat(newItems));
+    showToast(newItems.length + ' file' + (newItems.length > 1 ? 's' : '') + ' added.', 'success');
   }, [showToast]);
 
   const onDrop = (e) => {
     e.preventDefault(); setDragOver(false);
-    addFiles(e.dataTransfer.files);
+    if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
   };
 
   useEffect(() => {
     const onPaste = (e) => {
-      const items = e.clipboardData && e.clipboardData.items;
-      if (!items) return;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const blob = items[i].getAsFile();
+      const cd = e.clipboardData;
+      if (!cd || !cd.items) return;
+      for (let i = 0; i < cd.items.length; i++) {
+        if (cd.items[i].type.indexOf('image') !== -1) {
+          const blob = cd.items[i].getAsFile();
           if (blob) addFiles([new File([blob], 'pasted-image.png', { type: blob.type })]);
           break;
         }
@@ -1812,7 +2703,6 @@ function App() {
   return (
     <>
       <div className="layer">
-
         <header className="topbar">
           <a className="brand" href="#" onClick={(e) => e.preventDefault()}>
             <div className="brand-logo"><i className="fa-solid fa-wand-magic-sparkles" /></div>
@@ -1822,7 +2712,7 @@ function App() {
             </div>
           </a>
           <div className="topbar-spacer" />
-          <span className={`pill ${engineStatus === 'ready' ? 'ok' : engineStatus === 'error' ? 'err' : ''}`}>
+          <span className={'pill ' + (engineStatus === 'ready' ? 'ok' : engineStatus === 'error' ? 'err' : '')}>
             {engineStatus === 'ready' && <><i className="fa-solid fa-circle-check" /> Engines ready</>}
             {engineStatus === 'loading' && <><span className="mini-spinner" /> Loading…</>}
             {engineStatus === 'error' && <><i className="fa-solid fa-circle-exclamation" /> Engine issue</>}
@@ -1830,27 +2720,42 @@ function App() {
         </header>
 
         <main className="container">
-
           <section className="hero">
             <h2>Remove backgrounds <span className="glow-text">in your browser</span></h2>
             <p>
               ISNet · RMBG-1.4 · MODNet — running locally via ONNX Runtime Web.
-              Drop multiple images, remove backgrounds per-card, resize each individually,
-              and export as PNG or WebP. Everything stays on your device.
+              Plus: a live remove.bg / Leonardo.Ai API playground and every official &amp;
+              community SDK in one place. Everything stays on your device by default.
             </p>
           </section>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
             <span className="pill ok hero-pulse"><i className="fa-solid fa-shield-halved" /> 100% local</span>
-            <span className="pill info"><i className="fa-solid fa-cube" /> RMBG-1.4 · MODNet · ISNet</span>
-            <span className="pill"><i className="fa-solid fa-layer-group" /> Multi-image</span>
+            <span className="pill info"><i className="fa-solid fa-cloud" /> Cloud APIs</span>
+            <span className="pill"><i className="fa-solid fa-cubes" /> SDKs &amp; CLIs</span>
           </div>
+
+          {engineStatus === 'error' && (
+            <div className="warn-banner err">
+              <i className="fa-solid fa-triangle-exclamation" />
+              <div>
+                <b>The ISNet engine (@imgly) could not be loaded.</b>{' '}
+                {engineError ? '(' + engineError + ') ' : ''}
+                You can still use the ONNX models (RMBG-1.4, MODNet) from the model dropdown,
+                or use the Cloud API playground below with your own key.
+              </div>
+            </div>
+          )}
 
           {/* Drop zone */}
           <div style={{ marginBottom: 14 }}>
-            <div className={`drop-zone ${dragOver ? 'dragging' : ''}`} tabIndex={0}
+            <div className={'drop-zone ' + (dragOver ? 'dragging' : '')} tabIndex={0}
               onClick={() => fileInputRef.current && fileInputRef.current.click()}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current && fileInputRef.current.click(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  fileInputRef.current && fileInputRef.current.click();
+                }
+              }}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
               onDrop={onDrop}>
@@ -1867,14 +2772,14 @@ function App() {
               onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
           </div>
 
-          {/* Toolbar */}
           {items.length > 0 && (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               gap: 10, marginBottom: 14, flexWrap: 'wrap'
             }}>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>
-                <span style={{ color: 'var(--gold-l)' }}>{items.length}</span> {items.length === 1 ? 'item' : 'items'} loaded
+                <span style={{ color: 'var(--gold-l)' }}>{items.length}</span>{' '}
+                {items.length === 1 ? 'item' : 'items'} loaded
               </p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button className="btn-secondary"
@@ -1888,51 +2793,55 @@ function App() {
             </div>
           )}
 
-          {/* Grid of image cards */}
           {imageItems.length > 0 && (
             <div className="img-grid" style={{ marginBottom: 14 }}>
               {imageItems.map((it, i) => (
                 <ImageCard
-                  key={it.id}
-                  item={it}
-                  index={i}
-                  engineStatus={engineStatus}
-                  engineError={engineError}
-                  onUpdate={updateItem}
-                  onRemove={removeItem}
-                  showToast={showToast}
+                  key={it.id} item={it} index={i}
+                  engineStatus={engineStatus} engineError={engineError}
+                  onUpdate={updateItem} onRemove={removeItem} showToast={showToast}
                 />
               ))}
             </div>
           )}
 
-          {/* Video cards */}
           {videoItems.length > 0 && (
             <div className="img-grid" style={{ marginBottom: 14 }}>
               {videoItems.map((it, i) => (
                 <VideoCard
-                  key={it.id}
-                  item={it}
-                  index={i}
-                  onUpdate={updateItem}
-                  onRemove={removeItem}
-                  showToast={showToast}
+                  key={it.id} item={it} index={i}
+                  onUpdate={updateItem} onRemove={removeItem} showToast={showToast}
                 />
               ))}
             </div>
           )}
 
-          {/* Server-side reference */}
-          <div style={{ marginTop: 6 }}>
-            <ServerSideReference showToast={showToast} />
+          {/* ============================== */}
+          {/* CLOUD API PLAYGROUND           */}
+          {/* ============================== */}
+          <div style={{ marginTop: 8 }}>
+            <CloudAPIPlayground showToast={showToast} />
           </div>
 
+          {/* ============================== */}
+          {/* LIBRARIES & SDKs               */}
+          {/* ============================== */}
+          <div style={{ marginTop: 12 }}>
+            <LibrariesCard showToast={showToast} />
+          </div>
+
+          {/* ============================== */}
+          {/* LOCAL PYTHON REFERENCE         */}
+          {/* ============================== */}
+          <div style={{ marginTop: 12 }}>
+            <ServerSideReference showToast={showToast} />
+          </div>
         </main>
 
         <footer className="footer">
           <p style={{ margin: '0 0 6px' }}>
-            All processing happens locally in your browser. Only ONNX model files are
-            downloaded once from public CDNs and cached by your browser.
+            Local processing happens entirely in your browser. Cloud API calls use your
+            own key and go directly from your browser to the provider.
           </p>
           <p style={{ margin: 0 }}>HEX — cosmic edition · {new Date().getFullYear()}</p>
         </footer>
@@ -1943,626 +2852,282 @@ function App() {
   );
 }
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+/* ============================================================
+   MOUNT
+   ============================================================ */
+(function mount() {
+  const el = document.getElementById('root');
+  if (!el) return;
+  try {
+    const root = ReactDOM.createRoot(el);
+    root.render(
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    );
+    window.__hexMounted = true;
+  } catch (err) {
+    console.error('Mount failed:', err);
+    el.innerHTML =
+      '<div style="padding:48px 24px;text-align:center;font-family:system-ui">' +
+      '<h2 style="color:#ff8a8a;margin:0 0 8px">Failed to start the app</h2>' +
+      '<p style="color:#8a8696;font-size:13px;margin:0">' +
+      String((err && err.message) ? err.message : err) +
+      '</p></div>';
+  }
+})();
 </script>
+
+<!-- ============================================================
+     DEPENDENCY LOADER — React, ReactDOM, Babel with multi-CDN
+     fallback, then transform + run the app source.
+     ============================================================ -->
 <script>
 (function () {
-  "use strict";
+  'use strict';
 
-  /* ==========================================================
-     CONFIGURATION
-     ========================================================== */
-  var ACP = {
-    /* --- interaction shields --- */
-    rightClick       : true,
-    selection        : true,
-    copyCutPaste     : true,
-    dragDrop         : true,
-    selectAll        : true,
-    findOnPage       : false,
-    savePage         : true,
-    printKeys        : true,
-    viewSource       : true,
-    devtoolsKeys     : true,
-
-    /* --- advanced client-side security --- */
-    frameBust        : true,
-    iframeBlock      : true,
-    watermark        : true,
-    watermarkText    : "",                 // "" = auto host + date
-    clipboardPoison  : true,
-    printScreenTrap  : true,
-    consoleTrap      : true,
-    devtoolsDetect   : true,
-    debuggerTrap     : false,
-    lockOnDevtools   : true,
-    blurOnBlur       : true,
-    contextPoison    : true,
-    mutationGuard    : true,
-    disableImgMenu   : true,
-    killDrop         : true,
-
-    /* --- UX / look --- */
-    keepFormsUsable  : true,
-    showToast        : true,
-    toastText        : "This content is protected.",
-
-    /* --- Font Awesome icon classes (fa-solid) --- */
-    iconToast        : "fa-shield-halved",
-    iconGuard        : "fa-lock",
-    iconWatermark    : "fa-shield-halved",
-    iconPill         : "fa-circle-exclamation",
-
-    /* --- Console banner --- */
-    consoleMessage : "%c⛔ STOP! This content is protected. Unauthorized copying is prohibited.",
-    consoleStyle   : "color:#ff4d6d; font-size:20px; font-weight:bold; text-shadow:0 0 8px rgba(255,77,109,.6);",
-
-    /* --- Asset loader --- */
-    fontAwesomeURL : "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  var CDN_LISTS = {
+    react: [
+      'https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js',
+      'https://unpkg.com/react@18/umd/react.production.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js'
+    ],
+    reactDom: [
+      'https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js',
+      'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js'
+    ],
+    babel: [
+      'https://cdn.jsdelivr.net/npm/@babel/standalone@7.25.6/babel.min.js',
+      'https://unpkg.com/@babel/standalone/babel.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js'
+    ]
   };
-  /* ========================================================== */
 
+  var dotReact    = document.getElementById('boot-dot-react');
+  var dotReactDom = document.getElementById('boot-dot-reactdom');
+  var dotBabel    = document.getElementById('boot-dot-babel');
+  var bootMsg     = document.getElementById('boot-msg');
+  var bootEl      = document.getElementById('boot');
+  var startedAt   = Date.now();
+  var hardTimeout = 25000;
+  var warnTimeout = 12000;
 
-  /* ---------------- helpers ---------------- */
-  var doc = document, win = window;
-  var toastEl, toastIcon, toastText, guardEl, wmEl;
-  var toastTimer, lastToast = 0;
-
-  function on(el, type, fn, cap){
+  function setDot(el, state) {
     if (!el) return;
-    if (el.addEventListener) el.addEventListener(type, fn, !!cap);
-    else if (el.attachEvent) el.attachEvent("on" + type, fn);
+    el.classList.remove('ok', 'err');
+    if (state) el.classList.add(state);
+  }
+  function setMsg(html) { if (bootMsg) bootMsg.innerHTML = html; }
+
+  function showHardError(msg) {
+    if (!bootEl) return;
+    var elapsed = Math.round((Date.now() - startedAt) / 1000);
+    bootEl.innerHTML =
+      '<div class="box">' +
+        '<h2 style="color:#ff8a8a">Could not start the app</h2>' +
+        '<p>' + msg + '</p>' +
+        '<p style="margin-top:10px;font-size:12px">' +
+          'Elapsed: ' + elapsed + 's · ' +
+          'A browser extension may be blocking scripts, or your network blocks all three CDNs.' +
+        '</p>' +
+        '<button class="boot-retry" onclick="window.location.reload()">Retry</button>' +
+      '</div>';
   }
 
-  function isEditable(el){
-    if (!el || el.nodeType !== 1) return false;
-    if (el.isContentEditable) return true;
-    var t = el.tagName;
-    return t === "INPUT" || t === "TEXTAREA" || t === "SELECT";
-  }
-
-  function block(e){
-    if (!e) return false;
-    if (e.preventDefault) e.preventDefault();
-    if (e.stopPropagation) e.stopPropagation();
-    e.returnValue = false;
-    return false;
-  }
-
-  function fa(icon){
-    var i = doc.createElement("i");
-    i.className = "fa-solid " + icon;
-    i.setAttribute("aria-hidden", "true");
-    return i;
-  }
-
-  function toast(msg){
-    if (!ACP.showToast || !toastEl) return;
-    var now = Date.now();
-    if (now - lastToast < 650) return;
-    lastToast = now;
-    toastText.textContent = msg;
-    toastEl.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){
-      toastEl.classList.remove("show");
-    }, 1800);
-  }
-
-
-  /* ==========================================================
-     0. ASSET + STYLE INJECTION
-     ========================================================== */
-  function injectCSS(css){
-    var s = doc.createElement("style");
-    s.setAttribute("type", "text/css");
-    s.setAttribute("data-acp", "styles");
-    if (s.styleSheet) s.styleSheet.cssText = css;
-    else s.appendChild(doc.createTextNode(css));
-    (doc.head || doc.documentElement).appendChild(s);
-  }
-
-  function loadFontAwesome(){
-    if (!ACP.fontAwesomeURL) return;
-    var l = doc.createElement("link");
-    l.rel = "stylesheet";
-    l.href = ACP.fontAwesomeURL;
-    l.crossOrigin = "anonymous";
-    l.referrerPolicy = "no-referrer";
-    (doc.head || doc.documentElement).appendChild(l);
-  }
-
-  function injectWidgetStyles(){
-    injectCSS([
-      '.acp-toast{',
-        'position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);',
-        'display:flex;align-items:center;gap:10px;max-width:min(92vw,470px);',
-        'padding:12px 18px;border-radius:999px;',
-        'background:rgba(17,19,26,.95);color:#fff;',
-        'font:600 14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;',
-        'border:1px solid rgba(255,77,109,.45);',
-        'box-shadow:0 14px 38px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.04) inset;',
-        'opacity:0;pointer-events:none;z-index:2147483000;',
-        'transition:opacity .25s ease,transform .25s ease;',
-        '-webkit-user-select:none;user-select:none;',
-      '}',
-      '.acp-toast.show{opacity:1;transform:translate(-50%,0)}',
-      '.acp-toast-icon{display:inline-flex;align-items:center;color:#ff4d6d;font-size:16px;line-height:1}',
-      '.acp-toast-text{display:inline-block}',
-
-      '.acp-guard{',
-        'position:fixed;top:0;left:0;right:0;bottom:0;',
-        'display:none;align-items:center;justify-content:center;padding:24px;',
-        'background:rgba(8,10,16,.86);text-align:center;',
-        '-webkit-backdrop-filter:blur(16px) saturate(120%);',
-        'backdrop-filter:blur(16px) saturate(120%);',
-        'z-index:2147483600;',
-      '}',
-      'body.acp-locked .acp-guard{display:flex}',
-      'body.acp-locked{overflow:hidden}',
-      '.acp-guard-box{',
-        'max-width:440px;padding:34px 30px 30px;border-radius:20px;',
-        'background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));',
-        'border:1px solid rgba(255,255,255,.12);',
-        'box-shadow:0 40px 90px rgba(0,0,0,.6);',
-        'font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#e7ebf3;',
-      '}',
-      '.acp-guard-icon{',
-        'width:64px;height:64px;margin:0 auto 18px;border-radius:50%;',
-        'display:flex;align-items:center;justify-content:center;font-size:26px;color:#ff4d6d;',
-        'background:rgba(255,77,109,.12);border:1px solid rgba(255,77,109,.35);',
-      '}',
-      '.acp-guard-title{margin:0 0 8px;font-size:20px;letter-spacing:-.01em}',
-      '.acp-guard-sub{margin:0 0 18px;color:#9aa3b2;font-size:14px;line-height:1.6}',
-      '.acp-guard-pill{',
-        'display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;',
-        'font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;',
-        'color:#ff4d6d;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.3);',
-      '}',
-
-      '#acp-watermark{',
-        'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147482000;',
-        'pointer-events:none;overflow:hidden;opacity:.10;',
-        'display:flex;flex-wrap:wrap;align-content:flex-start;',
-        'gap:44px 34px;padding:34px;',
-        'font:700 12.5px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;',
-        'color:#ffffff;mix-blend-mode:overlay;',
-        '-webkit-user-select:none;user-select:none;',
-      '}',
-      '#acp-watermark span{',
-        'display:inline-flex;align-items:center;gap:7px;white-space:nowrap;',
-        'transform:rotate(-24deg);',
-        '-webkit-user-drag:none;',
-      '}',
-      '#acp-watermark i{font-size:11px}',
-
-      'body.acp-blur > *:not(.acp-toast):not(.acp-guard):not(#acp-watermark){',
-        'filter:blur(9px);transition:filter .22s ease;',
-        '-webkit-user-select:none;user-select:none;',
-      '}',
-
-      '@media print{',
-        '.acp-toast,.acp-guard{display:none !important}',
-        '#acp-watermark{opacity:.2}',
-      '}',
-
-      '@media (prefers-reduced-motion: reduce){',
-        '.acp-toast{transition:none}',
-      '}'
-    ].join(""));
-  }
-
-
-  /* ==========================================================
-     1. ANTI-IFRAME / FRAME BUST
-     ========================================================== */
-  function antiFrame(){
-    try{
-      if (win.top !== win.self){
-        if (ACP.frameBust) win.top.location = win.self.location.href;
-        if (ACP.iframeBlock) doc.documentElement.style.display = "none";
-      }
-    }catch(e){
-      if (ACP.iframeBlock) doc.documentElement.style.display = "none";
-    }
-  }
-
-
-  /* ==========================================================
-     2. UI — TOAST + LOCK SCREEN
-     ========================================================== */
-  function buildUI(){
-    if (!doc.body) return;
-
-    toastEl = doc.createElement("div");
-    toastEl.className = "acp-toast";
-    toastEl.setAttribute("role", "status");
-    toastEl.setAttribute("aria-live", "polite");
-
-    toastIcon = doc.createElement("span");
-    toastIcon.className = "acp-toast-icon";
-    toastIcon.appendChild(fa(ACP.iconToast));
-
-    toastText = doc.createElement("span");
-    toastText.className = "acp-toast-text";
-    toastText.textContent = ACP.toastText;
-
-    toastEl.appendChild(toastIcon);
-    toastEl.appendChild(toastText);
-    doc.body.appendChild(toastEl);
-
-    if (ACP.devtoolsDetect && ACP.lockOnDevtools){
-      guardEl = doc.createElement("div");
-      guardEl.className = "acp-guard";
-      guardEl.setAttribute("role", "alertdialog");
-      guardEl.setAttribute("aria-modal", "true");
-
-      var box = doc.createElement("div");
-      box.className = "acp-guard-box";
-
-      var ic = doc.createElement("div");
-      ic.className = "acp-guard-icon";
-      ic.appendChild(fa(ACP.iconGuard));
-
-      var title = doc.createElement("h2");
-      title.className = "acp-guard-title";
-      title.textContent = "Developer Tools Detected";
-
-      var sub = doc.createElement("p");
-      sub.className = "acp-guard-sub";
-      sub.textContent = "Please close DevTools to continue reading this page.";
-
-      var pill = doc.createElement("div");
-      pill.className = "acp-guard-pill";
-      pill.appendChild(fa(ACP.iconPill));
-      var pillTxt = doc.createElement("span");
-      pillTxt.textContent = "Content Protected";
-      pill.appendChild(pillTxt);
-
-      box.appendChild(ic);
-      box.appendChild(title);
-      box.appendChild(sub);
-      box.appendChild(pill);
-      guardEl.appendChild(box);
-      doc.body.appendChild(guardEl);
-    }
-  }
-
-
-  /* ==========================================================
-     3. WATERMARK
-     ========================================================== */
-  function buildWatermark(){
-    if (!ACP.watermark || !doc.body || wmEl) return;
-
-    var text = ACP.watermarkText;
-    if (!text){
-      var d = new Date();
-      var stamp = d.getFullYear() + "-" +
-                  ("0" + (d.getMonth() + 1)).slice(-2) + "-" +
-                  ("0" + d.getDate()).slice(-2);
-      text = (win.location.hostname || "protected") + " • " + stamp;
-    }
-
-    wmEl = doc.createElement("div");
-    wmEl.id = "acp-watermark";
-    wmEl.setAttribute("aria-hidden", "true");
-
-    var frag = doc.createDocumentFragment();
-    for (var i = 0; i < 60; i++){
-      var s = doc.createElement("span");
-      s.appendChild(fa(ACP.iconWatermark));
-      s.appendChild(doc.createTextNode(text));
-      frag.appendChild(s);
-    }
-    wmEl.appendChild(frag);
-    doc.body.appendChild(wmEl);
-  }
-
-
-  /* ==========================================================
-     4. DRAG / DROP + MUTATION GUARD
-     ========================================================== */
-  function hardenImages(root){
-    if (!ACP.dragDrop) return;
-    var imgs = (root || doc).getElementsByTagName("img");
-    for (var i = 0; i < imgs.length; i++){
-      imgs[i].setAttribute("draggable", "false");
-      imgs[i].setAttribute("oncontextmenu", "return false;");
-    }
-  }
-
-  function mutationGuard(){
-    if (!ACP.mutationGuard || !win.MutationObserver || !doc.body) return;
-    new MutationObserver(function(muts){
-      for (var m = 0; m < muts.length; m++){
-        var nodes = muts[m].addedNodes;
-        for (var n = 0; n < nodes.length; n++){
-          var node = nodes[n];
-          if (node.nodeType !== 1) continue;
-          if (node.tagName === "IMG") node.setAttribute("draggable", "false");
-          if (node.getElementsByTagName) hardenImages(node);
+  function loadOne(urls, checkFn, label, dot) {
+    return new Promise(function (resolve, reject) {
+      var i = 0;
+      function attempt() {
+        if (i >= urls.length) {
+          setDot(dot, 'err');
+          reject(new Error('All CDNs failed for ' + label));
+          return;
         }
+        var url = urls[i++];
+        var s = document.createElement('script');
+        s.src = url;
+        s.async = false;
+        s.onload = function () {
+          setTimeout(function () {
+            if (checkFn()) { setDot(dot, 'ok'); resolve(url); }
+            else attempt();
+          }, 0);
+        };
+        s.onerror = function () {
+          console.warn('[HEX] Failed to load ' + label + ' from ' + url);
+          attempt();
+        };
+        document.head.appendChild(s);
       }
-    }).observe(doc.body, { childList: true, subtree: true });
-  }
-
-
-  /* ==========================================================
-     5. CONSOLE TRAP
-     ========================================================== */
-  function consoleTrap(){
-    if (!ACP.consoleTrap || !win.console) return;
-    try{
-      win.console.log(ACP.consoleMessage, ACP.consoleStyle);
-      win.console.log(
-        "%cUnauthorized copying, scraping, or redistribution is strictly prohibited.",
-        "color:#9aa3b2;font-size:12px;"
-      );
-    }catch(e){}
-
-    var noop = function(){};
-    var methods = ["log","info","warn","error","debug","trace","dir","table","clear"];
-    for (var i = 0; i < methods.length; i++){
-      try{ win.console[methods[i]] = noop; }catch(e){}
-    }
-    setInterval(function(){
-      try{ if (win.console && win.console.clear) win.console.clear(); }catch(e){}
-    }, 2500);
-  }
-
-
-  /* ==========================================================
-     6. DEBUGGER TRAP (opt-in)
-     ========================================================== */
-  function debuggerTrap(){
-    if (!ACP.debuggerTrap) return;
-    (function loop(){
-      var t0 = (win.performance && performance.now) ? performance.now() : Date.now();
-      // eslint-disable-next-line no-debugger
-      debugger;
-      var t1 = (win.performance && performance.now) ? performance.now() : Date.now();
-      if (t1 - t0 > 120) { /* DevTools likely paused execution */ }
-      setTimeout(loop, 200);
-    })();
-  }
-
-
-  /* ==========================================================
-     7. CLIPBOARD POISON + PRINTSCREEN TRAP
-     ========================================================== */
-  function clipboardPoison(e){
-    if (!ACP.clipboardPoison) return false;
-    try{
-      var msg = "⛔ Content protected — copying is not permitted. " +
-                (win.location.hostname || "");
-      if (e && e.clipboardData && e.clipboardData.setData){
-        e.clipboardData.setData("text/plain", msg);
-      } else if (win.clipboardData && win.clipboardData.setData){
-        win.clipboardData.setData("text", msg);
-      }
-    }catch(err){}
-    toast(ACP.toastText);
-    return true;
-  }
-
-  function printScreenTrap(){
-    if (!ACP.printScreenTrap) return;
-    on(win, "keyup", function(e){
-      var k = (e.key || "").toLowerCase();
-      if (k === "printscreen" || e.keyCode === 44){
-        try{
-          if (navigator.clipboard && navigator.clipboard.writeText){
-            navigator.clipboard.writeText("⛔ Screenshot content is protected.");
-          }
-        }catch(err){}
-        toast("Screenshot blocked by protection policy.");
-      }
-    }, true);
-  }
-
-
-  /* ==========================================================
-     8. FOCUS LOSS BLUR
-     ========================================================== */
-  function focusBlur(){
-    if (!ACP.blurOnBlur) return;
-    function apply(){ if (doc.body) doc.body.classList.add("acp-blur"); }
-    function remove(){ if (doc.body) doc.body.classList.remove("acp-blur"); }
-    on(win, "blur", apply);
-    on(win, "focus", remove);
-    on(doc, "visibilitychange", function(){
-      if (doc.hidden) apply(); else remove();
+      attempt();
     });
   }
 
+  var warnTimer = setTimeout(function () {
+    if (!window.__hexMounted) {
+      setMsg('<i class="fa-solid fa-circle-notch fa-spin" style="opacity:.6"></i> ' +
+        'Still loading — some CDNs may be slow. Hold tight…');
+    }
+  }, warnTimeout);
 
-  /* ==========================================================
-     9. KEYBOARD SHIELD
-     ========================================================== */
-  function keyboardShield(){
-    on(doc, "keydown", function(e){
-      var k     = (e.key || "").toUpperCase();
-      var code  = e.keyCode || e.which || 0;
-      var ctrl  = e.ctrlKey || e.metaKey;
-      var shift = e.shiftKey;
-      var alt   = e.altKey;
-      var editable = ACP.keepFormsUsable && isEditable(e.target);
+  var hardTimer = setTimeout(function () {
+    clearTimeout(warnTimer);
+    if (window.__hexMounted) return;
+    showHardError('The required JavaScript libraries could not be loaded.');
+  }, hardTimeout);
 
-      if (ACP.printScreenTrap && (k === "PRINTSCREEN" || code === 44)){
-        toast("Screenshot key is blocked.");
-        return block(e);
-      }
-      if (ACP.devtoolsKeys && (code === 123 || k === "F12")) return block(e);
-      if (ACP.devtoolsKeys && ctrl && shift &&
-          (k === "I" || k === "J" || k === "C" || k === "K" || k === "E")) return block(e);
-      if (ACP.devtoolsKeys && ctrl && alt &&
-          (k === "I" || k === "J" || k === "C" || k === "U")) return block(e);
-      if (ACP.viewSource && ctrl && !shift && k === "U") return block(e);
-      if (ACP.savePage   && ctrl && k === "S") return block(e);
-      if (ACP.printKeys  && ctrl && k === "P") return block(e);
-      if (ACP.findOnPage && ctrl && (k === "F" || k === "G")) return block(e);
+  Promise.all([
+    loadOne(CDN_LISTS.react,    function () { return !!window.React;    }, 'React',    dotReact),
+    loadOne(CDN_LISTS.reactDom, function () { return !!window.ReactDOM; }, 'ReactDOM', dotReactDom)
+  ])
+  .then(function () {
+    return loadOne(CDN_LISTS.babel, function () { return !!window.Babel; }, 'Babel', dotBabel);
+  })
+  .then(function () {
+    clearTimeout(warnTimer);
+    clearTimeout(hardTimer);
 
-      if (editable) return true;
+    var src = document.getElementById('hex-app-source');
+    if (!src) { showHardError('App source script was not found in the page.'); return; }
 
-      if (ACP.selectAll && ctrl && k === "A") return block(e);
-      if (ACP.copyCutPaste && ctrl && (k === "C" || k === "X" || k === "V")){
-        toast(ACP.toastText);
-        return block(e);
-      }
-      return true;
+    var jsxCode = src.textContent || src.innerHTML;
+    src.parentNode.removeChild(src);
+
+    var transformed;
+    try {
+      transformed = window.Babel.transform(jsxCode, {
+        presets: ['react'],
+        filename: 'hex-app.jsx',
+        sourceType: 'script'
+      }).code;
+    } catch (e) {
+      console.error('[HEX] Babel transform error:', e);
+      showHardError('JSX compilation failed: ' + (e.message || e));
+      return;
+    }
+
+    try {
+      var runner = document.createElement('script');
+      runner.textContent = transformed;
+      document.body.appendChild(runner);
+    } catch (e) {
+      console.error('[HEX] App runtime error:', e);
+      showHardError('App crashed during initialization: ' + (e.message || e));
+    }
+  })
+  .catch(function (err) {
+    clearTimeout(warnTimer);
+    clearTimeout(hardTimer);
+    console.error('[HEX] Dependency load error:', err);
+    showHardError(err && err.message ? err.message : 'Failed to load required libraries.');
+  });
+})();
+</script>
+
+<!-- Lightweight, non-breaking protection -->
+<script>
+(function () {
+  'use strict';
+  var CFG = {
+    blockContextMenu : true,
+    blockDevtoolsKeys: true,
+    blockSavePrint   : true,
+    toastEnabled     : true,
+    toastText        : 'This content is protected.'
+  };
+  var toastEl = null, toastTextEl = null, toastTimer = null, lastToast = 0;
+
+  function isEditable(el) {
+    if (!el || el.nodeType !== 1) return false;
+    if (el.isContentEditable) return true;
+    var t = el.tagName;
+    return t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT';
+  }
+
+  function buildToast() {
+    if (!CFG.toastEnabled || toastEl || !document.body) return;
+    toastEl = document.createElement('div');
+    toastEl.className = 'prot-toast';
+    var icon = document.createElement('i');
+    icon.className = 'fa-solid fa-shield-halved';
+    icon.setAttribute('aria-hidden', 'true');
+    toastTextEl = document.createElement('span');
+    toastTextEl.textContent = CFG.toastText;
+    toastEl.appendChild(icon);
+    toastEl.appendChild(toastTextEl);
+    document.body.appendChild(toastEl);
+  }
+
+  function toast(msg) {
+    if (!CFG.toastEnabled || !toastEl) return;
+    var now = Date.now();
+    if (now - lastToast < 700) return;
+    lastToast = now;
+    toastTextEl.textContent = msg || CFG.toastText;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1800);
+  }
+
+  if (CFG.blockContextMenu) {
+    document.addEventListener('contextmenu', function (e) {
+      if (isEditable(e.target)) return true;
+      e.preventDefault(); toast(CFG.toastText); return false;
     }, true);
   }
 
+  document.addEventListener('keydown', function (e) {
+    var k = (e.key || '').toUpperCase();
+    var code = e.keyCode || e.which || 0;
+    var ctrl = e.ctrlKey || e.metaKey;
+    var shift = e.shiftKey;
+    var alt = e.altKey;
 
-  /* ==========================================================
-     10. POINTER / CONTEXT / SELECTION / DRAG
-     ========================================================== */
-  function pointerShield(){
-
-    if (ACP.rightClick){
-      on(doc, "contextmenu", function(e){
-        if (ACP.keepFormsUsable && isEditable(e.target)) return true;
-        toast(ACP.toastText);
-        return block(e);
-      }, true);
-    }
-
-    if (ACP.selection){
-      on(doc, "mousedown", function(e){
-        if (e.detail > 1){
-          if (ACP.keepFormsUsable && isEditable(e.target)) return true;
-          return block(e);
-        }
-        return true;
-      }, true);
-
-      on(doc, "selectstart", function(e){
-        if (ACP.keepFormsUsable && isEditable(e.target)) return true;
-        return block(e);
-      }, true);
-
-      if (typeof doc.onselectstart !== "undefined"){
-        doc.onselectstart = function(){ return false; };
+    if (CFG.blockDevtoolsKeys) {
+      if (code === 123 || k === 'F12') { e.preventDefault(); return false; }
+      if (ctrl && shift && (k === 'I' || k === 'J' || k === 'C' || k === 'K' || k === 'E')) {
+        e.preventDefault(); return false;
       }
-    }
-
-    if (ACP.copyCutPaste){
-      on(doc, "copy", function(e){
-        if (ACP.keepFormsUsable && isEditable(e.target)) return true;
-        clipboardPoison(e);
-        return block(e);
-      }, true);
-      on(doc, "cut", function(e){
-        if (ACP.keepFormsUsable && isEditable(e.target)) return true;
-        return block(e);
-      }, true);
-      on(doc, "paste", function(e){
-        if (ACP.keepFormsUsable && isEditable(e.target)) return true;
-        return block(e);
-      }, true);
-    }
-
-    if (ACP.dragDrop){
-      on(doc, "dragstart", function(e){
-        var t = e.target;
-        if (t && (t.tagName === "IMG" || t.tagName === "A")) return block(e);
-        return true;
-      }, true);
-      on(doc, "drop", function(e){
-        if (ACP.keepFormsUsable && isEditable(e.target)) return true;
-        return block(e);
-      }, true);
-    }
-
-    if (ACP.killDrop){
-      on(win, "dragover", function(e){ return block(e); }, true);
-      on(win, "drop",     function(e){ return block(e); }, true);
-    }
-
-    if (ACP.disableImgMenu){
-      on(doc, "mousedown", function(e){
-        if (e.target && e.target.tagName === "IMG" && e.button === 2){
-          toast("Images are protected.");
-          return block(e);
-        }
-        return true;
-      }, true);
-    }
-
-    if (ACP.contextPoison){
-      on(doc, "contextmenu", function(e){
-        if (e.defaultPrevented) return block(e);
-        return true;
-      }, false);
-    }
-  }
-
-
-  /* ==========================================================
-     11. DEVTOOLS DETECTOR v2
-     ========================================================== */
-  function devtoolsDetect(){
-    if (!ACP.devtoolsDetect) return;
-    if (win.innerWidth < 768) return;
-    if ("ontouchstart" in win) return;
-    if (!doc.body) return;
-
-    var locked = false;
-
-    function check(){
-      var wDiff = win.outerWidth  - win.innerWidth;
-      var hDiff = win.outerHeight - win.innerHeight;
-      var open  = (wDiff > 160 || hDiff > 160);
-
-      if (open !== locked){
-        locked = open;
-        if (open) doc.body.classList.add("acp-locked");
-        else      doc.body.classList.remove("acp-locked");
+      if (ctrl && alt && (k === 'I' || k === 'J' || k === 'C' || k === 'U')) {
+        e.preventDefault(); return false;
       }
+      if (ctrl && !shift && k === 'U') { e.preventDefault(); return false; }
     }
+    if (CFG.blockSavePrint && ctrl && !shift && (k === 'S' || k === 'P')) {
+      e.preventDefault(); toast(CFG.toastText); return false;
+    }
+    return true;
+  }, true);
 
-    setInterval(check, 900);
-    on(win, "resize", check);
+  function hardenImages(root) {
+    var imgs = (root || document).getElementsByTagName('img');
+    for (var i = 0; i < imgs.length; i++) imgs[i].setAttribute('draggable', 'false');
   }
 
-
-  /* ==========================================================
-     BOOT
-     ========================================================== */
-  function bootExtras(){
-    var yr = doc.getElementById("yr");
-    if (yr) yr.textContent = new Date().getFullYear();
+  function boot() {
+    buildToast();
+    hardenImages(document);
+    if (window.MutationObserver && document.body) {
+      new MutationObserver(function (muts) {
+        for (var m = 0; m < muts.length; m++) {
+          var nodes = muts[m].addedNodes;
+          for (var n = 0; n < nodes.length; n++) {
+            var node = nodes[n];
+            if (node.nodeType !== 1) continue;
+            if (node.tagName === 'IMG') node.setAttribute('draggable', 'false');
+            if (node.getElementsByTagName) hardenImages(node);
+          }
+        }
+      }).observe(document.body, { childList: true, subtree: true });
+    }
   }
 
-  function init(){
-    injectWidgetStyles();
-    loadFontAwesome();
-
-    antiFrame();
-    buildUI();
-    buildWatermark();
-    hardenImages(doc);
-    mutationGuard();
-    consoleTrap();
-    debuggerTrap();
-    printScreenTrap();
-    focusBlur();
-    keyboardShield();
-    pointerShield();
-    devtoolsDetect();
-    bootExtras();
-
-    win.ACP = ACP;
-  }
-
-  if (doc.readyState === "loading"){
-    on(doc, "DOMContentLoaded", init);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    init();
+    boot();
   }
-
 })();
 </script>
 
