@@ -545,17 +545,3 @@ alt="Footer"
 </sub>
 
 </div>
-
-
-### Cosmic README & Live Stats
-
-This README feels like a mini product page: a glowing header, a typing SVG, and lots of realtime badges that update on their own.
-
-- **Animated hero area** — The waving header and typing tagline set the cosmic tone right away.
-- **Realtime repo badges** — Stars, forks, watchers, issues, PRs, last commit, and CI status all pull live data from shields.io.
-- **Badge categories** — Tech stack badges (HTML5, CSS3, JavaScript, Canvas API, zero dependencies) and visitor counters keep the metadata fresh.
-- **Animated stats section** — GitHub stats cards, a contribution activity graph, and a star-history chart add moving visuals.
-- **Security spotlight** — The supported-version table and vulnerability reporting steps are pulled directly from the repo’s SECURITY.md.
----
-
-**Optimization Tip:** You can swap the `?style=for-the-badge` parameter on any shields.io badge to `flat` or `plastic` for a different look. To make the CI badge work, update the `check-runs` endpoint to your actual workflow file name.
